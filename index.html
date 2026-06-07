@@ -1,0 +1,2671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#40e0c0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="manifest" href="./manifest.json">
+<title>MUSE</title>
+<style>
+/* ============================================
+   MUSE v0.2 — 极光绿像素未来主义 细节增强
+   ============================================ */
+
+:root {
+  --bg-deep:    #060f14;
+  --bg-card:    #081218;
+  --aurora:     #40e0c0;
+  --aurora-dim: rgba(64,224,192,0.55);
+  --aurora-soft:rgba(64,224,192,0.35);
+  --aurora-faint:rgba(64,224,192,0.10);
+  --aurora-ghost:rgba(64,224,192,0.05);
+  --aurora-glow:0 0 10px rgba(64,224,192,0.3);
+  --aurora-glow-strong:0 0 18px rgba(64,224,192,0.45);
+  --border:     rgba(64,224,192,0.08);
+  --border-hover:rgba(64,224,192,0.18);
+  --border-active:rgba(64,224,192,0.28);
+  --text:       rgba(64,224,192,0.72);
+  --text-dim:   rgba(64,224,192,0.30);
+  --text-bright:rgba(64,224,192,0.90);
+  --radius-sm:  2px;
+  --radius-md:  3px;
+  --radius-lg:  4px;
+  --ease-out:   cubic-bezier(0.22,0.61,0.36,1);
+  --ease-in:    cubic-bezier(0.55,0.06,0.68,0.19);
+  --ease-smooth:cubic-bezier(0.4,0,0.2,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html,body{
+  width:100%;height:100%;
+  background:#02080c;
+  font-family:'Consolas','Courier New',monospace;
+  color:var(--text);
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* ===== APP SHELL ===== */
+#app{
+  width:100vw;height:100vh;
+  background:var(--bg-deep);
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* Ambient aurora breathing */
+#app::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:
+    radial-gradient(ellipse at 20% 10%,rgba(64,224,192,0.03),transparent 50%),
+    radial-gradient(ellipse at 80% 85%,rgba(64,224,192,0.02),transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(64,224,192,0.015),transparent 70%);
+  pointer-events:none;z-index:0;
+  animation: aurora-breathe 8s ease-in-out infinite alternate;
+}
+@keyframes aurora-breathe{0%{opacity:0.7;}100%{opacity:1;}}
+
+/* Scanlines — finer */
+#app::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,transparent 2px,
+    rgba(0,0,0,0.018) 2px,rgba(0,0,0,0.018) 4px
+  );
+  pointer-events:none;z-index:1;
+}
+
+/* ===== DANMAKU CANVAS ===== */
+#danmaku-canvas{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  z-index:2;pointer-events:none;
+}
+
+/* ===== TOP BAR ===== */
+#topbar{
+  position:relative;z-index:15;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 20px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(6,15,20,0.95),rgba(6,15,20,0.7));
+  backdrop-filter:blur(12px);
+}
+#topbar .brand{
+  font-size:16px;font-weight:700;color:var(--aurora);
+  text-shadow:var(--aurora-glow),0 0 30px rgba(64,224,192,0.2);
+  letter-spacing:8px;
+  transition:text-shadow 0.4s var(--ease-out);
+}
+#topbar .brand:hover{
+  text-shadow:var(--aurora-glow-strong),0 0 40px rgba(64,224,192,0.3);
+}
+#topbar .top-actions{display:flex;gap:8px;}
+.top-btn{
+  font-size:10px;font-family:inherit;
+  color:var(--text-dim);background:transparent;
+  border:1px solid var(--border);
+  padding:5px 12px;border-radius:var(--radius-sm);
+  cursor:pointer;transition:all 0.25s var(--ease-smooth);
+  letter-spacing:1px;
+  position:relative;overflow:hidden;
+}
+.top-btn::before{
+  content:'';position:absolute;inset:0;
+  background:var(--aurora-ghost);
+  opacity:0;transition:opacity 0.25s var(--ease-smooth);
+}
+.top-btn:hover{
+  color:var(--aurora);
+  border-color:var(--border-hover);
+  box-shadow:var(--aurora-glow);
+  transform:translateY(-1px);
+}
+.top-btn:hover::before{opacity:1;}
+.top-btn:active{transform:translateY(0);transition:transform 0.05s;}
+
+/* ===== MAIN LAYOUT ===== */
+main{
+  flex:1;display:flex;gap:0;position:relative;z-index:3;
+  min-height:0;
+}
+
+/* ===== LEFT PANEL ===== */
+#left-panel{
+  flex:1;display:flex;flex-direction:column;
+  padding:16px 18px;
+  background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.2));
+  border-right:1px solid var(--border);
+  min-width:0;position:relative;
+}
+#left-panel > * + *{margin-top:10px;}
+
+/* ===== RIGHT PANEL ===== */
+#right-panel{
+  flex:1;display:flex;flex-direction:column;
+  padding:16px 18px;
+  background:linear-gradient(180deg,rgba(0,0,0,0.25),rgba(0,0,0,0.15));
+  min-width:0;min-height:0;overflow:hidden;
+}
+#right-panel > * + *{margin-top:10px;}
+
+/* ===== SECTION HEADERS ===== */
+.section-header{
+  font-size:10px;color:var(--aurora-dim);
+  text-align:center;
+  padding:0 0 8px;margin-bottom:2px;
+  border-bottom:1px solid var(--aurora-faint);
+  letter-spacing:5px;font-weight:700;
+  text-transform:uppercase;position:relative;
+}
+.section-header::after{
+  content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+  width:18px;height:1px;
+  background:var(--aurora);
+  box-shadow:0 0 4px rgba(64,224,192,0.5);
+}
+
+/* ===== PLAYLIST ===== */
+#playlist{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px;
+  min-height:0;padding-right:2px;
+}
+.playlist-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;
+  border:1px solid transparent;border-radius:var(--radius-sm);
+  cursor:pointer;transition:all 0.2s var(--ease-smooth);
+  position:relative;
+}
+.playlist-item::before{
+  content:'';position:absolute;inset:0;left:-2px;right:-2px;
+  border-radius:var(--radius-sm);
+  background:var(--aurora-ghost);
+  opacity:0;transition:opacity 0.25s var(--ease-smooth);
+  pointer-events:none;
+}
+.playlist-item:hover{border-color:var(--border-hover);background:rgba(64,224,192,0.03);}
+.playlist-item:hover::before{opacity:1;}
+.playlist-item.active{
+  border-color:var(--border-active);
+  background:rgba(64,224,192,0.05);
+  box-shadow:inset 0 0 20px rgba(64,224,192,0.02);
+}
+.playlist-item .dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+  transition:all 0.3s var(--ease-out);
+}
+.playlist-item .dot.active{
+  background:var(--aurora);
+  box-shadow:0 0 6px rgba(64,224,192,0.6),0 0 14px rgba(64,224,192,0.3);
+  animation:dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes dot-pulse{0%,100%{box-shadow:0 0 6px rgba(64,224,192,0.6),0 0 14px rgba(64,224,192,0.3);}50%{box-shadow:0 0 10px rgba(64,224,192,0.9),0 0 22px rgba(64,224,192,0.5);}}
+.playlist-item .dot.inactive{background:rgba(64,224,192,0.35);}
+.playlist-item .index{font-size:9px;color:var(--text-dim);width:16px;text-align:right;flex-shrink:0;}
+.playlist-item .name{
+  font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:color 0.2s;
+}
+.playlist-item.active .name{color:var(--aurora);text-shadow:0 0 6px rgba(64,224,192,0.15);}
+.playlist-item .duration{font-size:10px;color:var(--text-dim);}
+.playlist-item .playing-indicator{font-size:10px;color:var(--aurora);animation:indicator-blink 1s step-end infinite;}
+@keyframes indicator-blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* ===== CLOCK — DIGITAL ===== */
+#clock-area{
+  text-align:center;padding:14px 0;
+  border-top:1px solid var(--aurora-faint);
+  border-bottom:1px solid var(--aurora-faint);
+  background:rgba(0,0,0,0.3);position:relative;
+}
+#clock-area::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 1px,rgba(64,224,192,0.015) 1px,rgba(64,224,192,0.015) 2px);
+  pointer-events:none;
+}
+#clock-time{
+  font-family:'Consolas','Courier New',monospace;
+  font-size:40px;font-weight:700;color:var(--aurora);
+  text-shadow:0 0 8px rgba(64,224,192,0.5),0 0 20px rgba(64,224,192,0.25),0 0 40px rgba(64,224,192,0.1);
+  letter-spacing:10px;line-height:1.1;position:relative;z-index:2;
+}
+#clock-date{
+  font-size:9px;font-family:'Consolas',monospace;
+  color:var(--text-dim);margin-top:4px;letter-spacing:3px;position:relative;z-index:2;
+}
+
+/* ===== PROGRESS ===== */
+#progress-area{padding:2px 4px;}
+#progress-bar{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:3px;
+  background:rgba(64,224,192,0.06);border-radius:1px;border:none;outline:none;cursor:pointer;
+  transition:background 0.2s;
+}
+#progress-bar:hover{background:rgba(64,224,192,0.10);}
+#progress-bar::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:10px;height:10px;
+  background:var(--aurora);border-radius:50%;
+  box-shadow:0 0 8px rgba(64,224,192,0.5),0 0 16px rgba(64,224,192,0.2);
+  cursor:pointer;transition:all 0.2s var(--ease-out);
+}
+#progress-bar::-webkit-slider-thumb:hover{
+  box-shadow:0 0 14px rgba(64,224,192,0.7),0 0 24px rgba(64,224,192,0.35);
+  transform:scale(1.2);
+}
+#progress-bar::-moz-range-thumb{
+  width:10px;height:10px;background:var(--aurora);border:none;border-radius:50%;
+  box-shadow:0 0 8px rgba(64,224,192,0.5);
+}
+#time-display{display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);padding:3px 2px;font-family:'Consolas',monospace;}
+
+/* ===== CONTROLS ===== */
+#controls{display:flex;gap:8px;justify-content:center;align-items:center;padding:2px 0;}
+.ctrl-btn{
+  font-size:10px;font-family:inherit;
+  color:var(--aurora-dim);
+  border:1px solid rgba(64,224,192,0.15);
+  padding:6px 12px;border-radius:var(--radius-sm);
+  background:transparent;cursor:pointer;
+  transition:all 0.25s var(--ease-smooth);
+  position:relative;overflow:hidden;
+}
+.ctrl-btn::before{
+  content:'';position:absolute;inset:0;
+  background:var(--aurora-ghost);
+  opacity:0;transition:opacity 0.25s var(--ease-smooth);
+}
+.ctrl-btn:hover{color:var(--aurora);border-color:var(--border-hover);box-shadow:var(--aurora-glow);transform:translateY(-1px);}
+.ctrl-btn:hover::before{opacity:1;}
+.ctrl-btn:active{transform:translateY(0);}
+.ctrl-btn.play{
+  font-size:12px;padding:7px 16px;
+  border-color:var(--border-active);color:var(--aurora);
+  text-shadow:0 0 6px rgba(64,224,192,0.3);letter-spacing:2px;
+}
+.ctrl-btn.play:hover{box-shadow:0 0 16px rgba(64,224,192,0.35);}
+#vol-label{font-size:10px;color:var(--text-dim);font-family:'Consolas',monospace;margin-left:4px;letter-spacing:1px;}
+#vol-slider{
+  -webkit-appearance:none;appearance:none;
+  width:60px;height:3px;
+  background:rgba(64,224,192,0.08);border:none;border-radius:1px;outline:none;cursor:pointer;
+}
+#vol-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:8px;height:8px;background:var(--aurora);border-radius:50%;
+  box-shadow:0 0 6px rgba(64,224,192,0.4);cursor:pointer;transition:all 0.2s;
+}
+#vol-slider::-webkit-slider-thumb:hover{box-shadow:0 0 10px rgba(64,224,192,0.6);transform:scale(1.15);}
+#vol-slider::-moz-range-thumb{width:8px;height:8px;background:var(--aurora);border:none;border-radius:50%;}
+
+/* ===== CHAT ===== */
+#chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;min-height:0;padding-right:2px;}
+.chat-msg{
+  max-width:86%;padding:9px 12px;border-radius:var(--radius-md);
+  font-size:11px;line-height:1.6;
+  animation:msg-in 0.35s var(--ease-out);
+}
+@keyframes msg-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.chat-msg.user{
+  align-self:flex-end;
+  background:rgba(64,224,192,0.04);border:1px solid var(--border);
+  color:var(--text);
+  border-radius:var(--radius-md) var(--radius-md) 0 var(--radius-md);
+}
+.chat-msg.agent{
+  align-self:flex-start;color:var(--text-dim);
+  border-left:2px solid rgba(64,224,192,0.2);
+  border-radius:0 var(--radius-md) var(--radius-md) 0;
+  padding-left:12px;background:none;
+}
+
+/* ===== RECOMMENDATION CARD ===== */
+.rec-card{
+  align-self:flex-start;max-width:94%;flex-shrink:0;
+  background:rgba(64,224,192,0.03);border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:12px;display:flex;gap:12px;align-items:center;
+  cursor:pointer;transition:all 0.3s var(--ease-smooth);
+  animation:msg-in 0.4s var(--ease-out);
+  position:relative;
+}
+.rec-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 0%,rgba(64,224,192,0.03) 100%);
+  opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+.rec-card:hover{
+  border-color:var(--border-active);
+  box-shadow:0 0 20px rgba(64,224,192,0.08),0 4px 16px rgba(0,0,0,0.3);
+  transform:translateY(-1px);background:rgba(64,224,192,0.05);
+}
+.rec-card:hover::after{opacity:1;}
+.rec-card .cover{
+  width:44px;height:44px;
+  border:1px solid rgba(64,224,192,0.22);border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--aurora-dim);flex-shrink:0;
+  background:rgba(64,224,192,0.04);
+  transition:all 0.3s var(--ease-out);
+}
+.rec-card:hover .cover{border-color:var(--aurora-dim);box-shadow:0 0 12px rgba(64,224,192,0.15);}
+.rec-card .info{flex:1;min-width:0;}
+.rec-card .info .title{font-size:12px;color:var(--aurora);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;}
+.rec-card .info .meta{font-size:9px;color:var(--text-dim);margin-top:3px;line-height:1.4;}
+.rec-card .play-btn{
+  border:1px solid rgba(64,224,192,0.15);padding:6px 14px;
+  border-radius:var(--radius-sm);font-size:9px;font-family:inherit;
+  color:var(--aurora-dim);background:rgba(64,224,192,0.03);
+  cursor:pointer;transition:all 0.25s var(--ease-smooth);flex-shrink:0;letter-spacing:1px;
+}
+.rec-card .play-btn:hover{color:var(--aurora);border-color:var(--aurora);box-shadow:0 0 10px rgba(64,224,192,0.2);background:rgba(64,224,192,0.08);}
+
+/* No-source card — greyed out */
+.rec-card.no-source{
+  opacity:0.5;
+  border-color:rgba(64,224,192,0.03);
+  cursor:default;
+  filter:grayscale(0.6);
+}
+.rec-card.no-source:hover{
+  border-color:rgba(64,224,192,0.05);
+  box-shadow:none;
+  transform:none;
+  background:rgba(64,224,192,0.02);
+}
+.rec-card.no-source .cover{
+  border-color:rgba(64,224,192,0.08);
+  color:rgba(64,224,192,0.15);
+}
+.rec-card.no-source .info .title{color:rgba(64,224,192,0.25);}
+.rec-card.no-source .info .meta{color:rgba(64,224,192,0.12);}
+.rec-card.no-source .play-btn{
+  color:rgba(255,80,80,0.25);
+  border-color:rgba(255,80,80,0.06);
+  cursor:not-allowed;
+}
+.rec-card.no-source .play-btn:hover{
+  color:rgba(255,80,80,0.3);
+  border-color:rgba(255,80,80,0.08);
+  box-shadow:none;
+  background:transparent;
+}
+
+/* ===== PLATFORM SWITCHER ===== */
+#platform-switcher{display:flex;gap:0;flex-shrink:0;}
+.platform-btn{
+  font-size:9px;font-family:'Consolas',monospace;
+  color:var(--text-dim);background:transparent;
+  border:1px solid var(--border);padding:4px 7px;
+  cursor:pointer;transition:all 0.2s var(--ease-smooth);
+  letter-spacing:0.5px;
+  border-right-width:0;
+}
+.platform-btn:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
+.platform-btn:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-right-width:1px;}
+.platform-btn:only-child{border-radius:var(--radius-sm);}
+.platform-btn:hover{color:var(--aurora);background:rgba(64,224,192,0.04);border-color:var(--border-hover);}
+.platform-btn.active{
+  color:var(--aurora);background:rgba(64,224,192,0.06);
+  border-color:var(--border-active);
+  text-shadow:0 0 6px rgba(64,224,192,0.2);
+}
+
+/* ===== CHAT INPUT ===== */
+#chat-input-area{
+  display:flex;gap:8px;align-items:center;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 12px;background:rgba(0,0,0,0.3);
+  transition:all 0.3s var(--ease-smooth);
+}
+#chat-input-area:focus-within{
+  border-color:var(--border-active);
+  box-shadow:0 0 12px rgba(64,224,192,0.06),inset 0 0 12px rgba(64,224,192,0.02);
+}
+#chat-input{flex:1;background:transparent;border:none;outline:none;font-size:12px;font-family:inherit;color:var(--text-bright);caret-color:var(--aurora);min-width:0;}
+#chat-input::placeholder{color:rgba(64,224,192,0.15);}
+#chat-send{
+  font-size:10px;font-family:inherit;letter-spacing:2px;
+  color:var(--aurora-dim);border:1px solid rgba(64,224,192,0.15);
+  padding:6px 14px;border-radius:var(--radius-sm);
+  background:transparent;cursor:pointer;
+  transition:all 0.25s var(--ease-smooth);position:relative;overflow:hidden;
+}
+#chat-send::before{content:'';position:absolute;inset:0;background:rgba(64,224,192,0.06);opacity:0;transition:opacity 0.25s;}
+#chat-send:hover{color:var(--aurora);border-color:var(--border-active);box-shadow:var(--aurora-glow);transform:translateY(-1px);}
+#chat-send:hover::before{opacity:1;}
+#chat-send:active{transform:translateY(0);}
+
+/* ===== STATUS BAR ===== */
+#status-bar{
+  display:flex;gap:12px;justify-content:center;align-items:center;
+  padding:7px 0;font-size:8px;color:rgba(64,224,192,0.15);
+  border-top:1px solid var(--aurora-faint);
+  position:relative;z-index:3;letter-spacing:1px;
+  background:rgba(6,15,20,0.8);
+}
+#status-bar .sep{color:rgba(64,224,192,0.08);}
+.badge{display:inline-block;padding:1px 6px;border:1px solid var(--border);border-radius:1px;font-size:7px;letter-spacing:1px;}
+.badge.live{border-color:rgba(64,224,192,0.2);color:var(--aurora-dim);}
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;z-index:25;
+  background:rgba(2,8,12,0.94);
+  display:flex;align-items:center;justify-content:center;
+  animation:fade-in 0.2s var(--ease-out);
+}
+@keyframes fade-in{from{opacity:0;}to{opacity:1;}}
+.modal-overlay.hidden{display:none;}
+.modal-box{
+  background:var(--bg-deep);border:1px solid var(--border-active);
+  border-radius:var(--radius-lg);padding:28px;width:420px;
+  box-shadow:0 0 40px rgba(64,224,192,0.06),0 20px 60px rgba(0,0,0,0.5);
+  animation:modal-in 0.3s var(--ease-out);
+}
+@keyframes modal-in{from{opacity:0;transform:translateY(20px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-box h3{font-size:14px;color:var(--aurora);text-shadow:var(--aurora-glow);margin-bottom:18px;text-align:center;letter-spacing:5px;}
+.modal-box label{font-size:10px;color:var(--text-dim);display:block;margin-bottom:4px;letter-spacing:1px;}
+.modal-box input[type="text"],
+.modal-box input[type="password"]{
+  width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border);
+  padding:8px 10px;font-size:11px;font-family:'Consolas',monospace;
+  color:var(--aurora);outline:none;border-radius:var(--radius-sm);caret-color:var(--aurora);
+  transition:border-color 0.25s;
+}
+.modal-box input:focus{border-color:var(--border-active);}
+.modal-row{display:flex;gap:8px;margin-top:16px;}
+.modal-btn{
+  flex:1;padding:8px 0;font-size:11px;font-family:inherit;
+  border:1px solid var(--border);background:transparent;color:var(--text-dim);
+  cursor:pointer;transition:all 0.25s var(--ease-smooth);
+  border-radius:var(--radius-sm);letter-spacing:1px;
+}
+.modal-btn:hover{color:var(--aurora);border-color:var(--border-hover);box-shadow:var(--aurora-glow);}
+.modal-btn.primary{border-color:var(--border-active);color:var(--aurora);box-shadow:0 0 10px rgba(64,224,192,0.1);}
+.modal-btn.primary:hover{box-shadow:var(--aurora-glow-strong);}
+.modal-btn.danger{color:rgba(255,80,80,0.5);border-color:rgba(255,80,80,0.12);}
+.modal-btn.danger:hover{color:#ff5050;border-color:rgba(255,80,80,0.3);box-shadow:0 0 10px rgba(255,80,80,0.15);}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(64,224,192,0.08);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(64,224,192,0.15);}
+
+/* ===== LOADING ===== */
+.loading-dots{display:inline-flex;gap:6px;align-items:center;padding:6px 0;}
+.loading-dots span{
+  width:6px;height:6px;background:var(--aurora);border-radius:50%;
+  animation:blink 1.2s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes blink{0%,100%{opacity:0.12;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 8px var(--aurora);}}
+@keyframes colon-blink{0%,100%{opacity:1;}50%{opacity:0.1;}}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:11px;color:var(--text-dim);gap:6px;
+}
+.empty-state .icon{font-size:28px;opacity:0.4;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <canvas id="danmaku-canvas"></canvas>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="brand">M U S E</div>
+    <div class="top-actions">
+      <button class="top-btn" id="btn-fullscreen" title="全屏">[FULL]</button>
+      <button class="top-btn" id="btn-settings" title="设置">[SET]</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main>
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+      <div class="section-header">PLAYLIST</div>
+      <div id="playlist">
+        <div class="empty-state">等待 Agent 推荐歌曲...</div>
+      </div>
+
+      <div id="clock-area">
+        <div id="clock-time">--:--</div>
+        <div id="clock-date"></div>
+      </div>
+
+      <div id="progress-area">
+        <input type="range" id="progress-bar" min="0" max="100" value="0">
+        <div id="time-display">
+          <span id="time-current">00:00</span>
+          <span id="time-total">--:--</span>
+        </div>
+      </div>
+
+      <div id="controls">
+        <button class="ctrl-btn" id="btn-prev">|◀◀</button>
+        <button class="ctrl-btn play" id="btn-play">▶</button>
+        <button class="ctrl-btn" id="btn-next">▶▶|</button>
+        <span id="vol-label">VOL</span>
+        <input type="range" id="vol-slider" min="0" max="100" value="70">
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div class="section-header">AGENT  MUSE</div>
+      <div id="chat-messages">
+        <div class="chat-msg agent">> 欢迎。告诉我你此刻的心情，我为你找歌。</div>
+      </div>
+      <div id="chat-input-area">
+        <div id="platform-switcher">
+          <button class="platform-btn active" data-platform="auto">自动</button>
+          <button class="platform-btn" data-platform="netease">网易云</button>
+          <button class="platform-btn" data-platform="web">网络</button>
+        </div>
+        <input type="text" id="chat-input" placeholder="_ 描述你此刻的情绪..." autocomplete="off">
+        <button id="chat-send">SEND</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- STATUS BAR -->
+  <div id="status-bar">
+    <span>muse v0.2</span><span class="sep">|</span>
+    <span>极光绿 · 像素未来主义</span><span class="sep">|</span>
+    <span>DeepSeek V4</span><span class="sep">|</span>
+    <span class="badge live">LIVE</span>
+    <span id="status-song">就绪</span>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay hidden" id="settings-modal">
+    <div class="modal-box">
+      <h3>API 设置</h3>
+      <label>DeepSeek API Key</label>
+      <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+      <label style="margin-top:10px;">或者通过 URL 参数传入: ?key=sk-...</label>
+
+      <label style="margin-top:12px;">网易云API地址</label>
+      <input type="text" id="netease-api-input" placeholder="http://localhost:3000" autocomplete="off" style="font-size:clamp(9px,1.11vw,16px);">
+      <label style="margin-top:8px;">多平台API地址</label>
+      <input type="text" id="lx-api-input" placeholder="http://localhost:9000" autocomplete="off" style="font-size:clamp(9px,1.11vw,16px);">
+      <label style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" id="demo-mode-toggle" style="width:auto;margin:0;"> 强制Demo模式（无后端体验）
+      </label>
+      <div class="modal-row">
+        <button class="modal-btn" id="modal-cancel">取消</button>
+        <button class="modal-btn danger" id="modal-clear">清除</button>
+        <button class="modal-btn primary" id="modal-save">保存</button>
+      </div>
+      <hr style="border-color:rgba(64,224,192,0.08);margin:clamp(10px,1.39vw,24px) 0;">
+      <h3>网易云登录</h3>
+      <div id="netease-login-area">
+        <div id="netease-status" style="font-size:clamp(9px,1.11vw,18px);color:var(--text-dim);margin-bottom:clamp(6px,0.83vw,14px);">
+          状态: <span id="netease-status-text">检测中...</span>
+        </div>
+        <div id="qr-container" style="display:none;text-align:center;margin:clamp(8px,1.11vw,18px) 0;">
+          <img id="qr-image" src="" alt="扫描二维码登录" title="点击关闭" style="width:clamp(150px,22vw,260px);height:clamp(150px,22vw,260px);border:1px solid var(--border);border-radius:4px;cursor:pointer;">
+          <p style="font-size:clamp(8px,0.83vw,14px);color:var(--text-dim);margin-top:clamp(4px,0.56vw,10px);">用网易云音乐 APP 扫码 · 点击图片关闭</p>
+          <button class="modal-btn" id="btn-qr-back" style="margin-top:clamp(4px,0.56vw,10px);width:auto;padding:clamp(4px,0.56vw,10px) clamp(10px,1.39vw,24px);">返回</button>
+        </div>
+        <div id="phone-login-area" style="display:none;">
+          <label>手机号</label>
+          <input type="text" id="netease-phone" placeholder="138xxxxxxxx" autocomplete="off">
+          <label style="margin-top:clamp(6px,0.83vw,14px);">密码</label>
+          <input type="password" id="netease-password" placeholder="登录密码" autocomplete="off">
+          <label style="margin-top:clamp(6px,0.83vw,14px);">验证码</label>
+          <div style="display:flex;gap:clamp(6px,0.83vw,14px);">
+            <input type="text" id="netease-captcha" placeholder="短信验证码" autocomplete="off" style="flex:1;">
+            <button class="modal-btn primary" id="btn-send-captcha" style="flex:0 0 auto;padding:clamp(4px,0.56vw,10px) clamp(8px,1.11vw,18px);white-space:nowrap;">发送验证码</button>
+          </div>
+          <p style="font-size:clamp(7px,0.83vw,13px);color:var(--text-dim);margin-top:clamp(3px,0.42vw,7px);">密码和验证码仅用于登录，不会保存</p>
+          <div class="modal-row">
+            <button class="modal-btn primary" id="btn-phone-login-do">登录</button>
+            <button class="modal-btn" id="btn-phone-back">返回</button>
+          </div>
+        </div>
+        <div id="cookie-import-area">
+          <label>手动导入 Cookie</label>
+          <input type="text" id="cookie-import-input" placeholder="MUSIC_U=xxx; __csrf=yyy; ..." autocomplete="off" style="font-size:clamp(7px,0.83vw,13px);">
+          <p style="font-size:clamp(6px,0.69vw,11px);color:var(--text-dim);margin-top:clamp(2px,0.28vw,5px);">
+            浏览器打开 music.163.com 登录后，F12 → Application → Cookies → 复制 MUSIC_U 和 __csrf 的值，格式: MUSIC_U=值; __csrf=值
+          </p>
+          <button class="modal-btn primary" id="btn-cookie-import" style="margin-top:clamp(4px,0.56vw,10px);width:100%;">导入 Cookie</button>
+        </div>
+        <div class="modal-row" id="netease-login-btns">
+          <button class="modal-btn primary" id="btn-netease-login">扫码登录</button>
+          <button class="modal-btn" id="btn-phone-login-show">手机登录</button>
+          <button class="modal-btn danger" id="btn-netease-logout" style="flex:0 0 auto;padding:clamp(5px,0.69vw,12px) clamp(8px,1.11vw,18px);">退出</button>
+        </div>
+        <div class="modal-row" style="margin-top:clamp(6px,0.83vw,14px);">
+          <button class="modal-btn" id="btn-auto-detect-cookie">自动检测</button>
+          <button class="modal-btn" id="btn-open-api-page">打开API页面</button>
+        </div>
+        <p style="font-size:clamp(6px,0.69vw,11px);color:var(--text-dim);margin-top:clamp(2px,0.28vw,5px);text-align:center;">
+          点击"打开API页面"在浏览器中登录网易云，cookie将自动保存到浏览器中，然后点击"自动检测"即可获取登录状态
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<audio id="audio-player" preload="none"></audio>
+
+<script>
+(function(){
+'use strict';
+
+// ============ STATE ============
+const state = {
+  playlist: [],
+  currentIndex: -1,
+  isPlaying: false,
+  volume: 0.7,
+  apiKey: '',
+  neteaseCookie: '',
+  isGenerating: false,
+  isPreloading: false,
+  preloadedForIndex: -1,
+  currentMood: '',
+  seedSong: null,
+  generationCount: 0,
+  searchPlatform: 'auto',
+  demoMode: false,
+  apiBase: localStorage.getItem('muse_api_base') || 'http://localhost:3000',
+  lxApiBase: localStorage.getItem('muse_lx_api_base') || 'http://localhost:9000'
+};
+
+// ====================================================================
+// DEMO MODE — 自动检测 + 模拟数据，评委无障碍体验
+// ====================================================================
+const DEMO_DETECT_TIMEOUT = 2000;
+
+const DEMO_SONGS = [
+  { id:'demo_c1',name:'夜的钢琴曲',artist:'石进',genre:'钢琴/轻音乐',mood:'calm',duration:245,tags:['钢琴','安静','夜晚'] },
+  { id:'demo_c2',name:'Through the Arbor',artist:'Kevin Kern',genre:'新世纪',mood:'calm',duration:218,tags:['钢琴','自然','放松'] },
+  { id:'demo_c3',name:'Snowdreams',artist:'Bandari',genre:'轻音乐',mood:'calm',duration:270,tags:['自然','治愈'] },
+  { id:'demo_c4',name:'Kiss The Rain',artist:'Yiruma',genre:'钢琴',mood:'calm',duration:253,tags:['钢琴','雨天','治愈'] },
+  { id:'demo_r1',name:'雨天咖啡馆',artist:'Lofi Jazz',genre:'Lofi/Jazz',mood:'rain',duration:195,tags:['雨天','咖啡','爵士'] },
+  { id:'demo_r2',name:'Rhythm of the Rain',artist:'The Cascades',genre:'经典流行',mood:'rain',duration:158,tags:['雨天','经典'] },
+  { id:'demo_r3',name:'听见下雨的声音',artist:'周杰伦',genre:'华语流行',mood:'rain',duration:241,tags:['雨天','华语'] },
+  { id:'demo_r4',name:'雨爱',artist:'杨丞琳',genre:'流行',mood:'rain',duration:225,tags:['雨天','情歌'] },
+  { id:'demo_h1',name:'Sunny',artist:'Boney M.',genre:'Disco',mood:'happy',duration:237,tags:['阳光','欢快'] },
+  { id:'demo_h2',name:'小幸运',artist:'田馥甄',genre:'流行',mood:'happy',duration:260,tags:['青春','甜蜜'] },
+  { id:'demo_h3',name:'Happy',artist:'Pharrell Williams',genre:'流行',mood:'happy',duration:233,tags:['快乐','英文'] },
+  { id:'demo_h4',name:'New Boy',artist:'朴树',genre:'摇滚/流行',mood:'happy',duration:285,tags:['青春','阳光'] },
+  { id:'demo_s1',name:'后来',artist:'刘若英',genre:'流行',mood:'sad',duration:332,tags:['怀旧','情歌'] },
+  { id:'demo_s2',name:'Someone Like You',artist:'Adele',genre:'流行',mood:'sad',duration:285,tags:['情歌','英文'] },
+  { id:'demo_s3',name:'十年',artist:'陈奕迅',genre:'流行',mood:'sad',duration:202,tags:['怀旧','经典'] },
+  { id:'demo_s4',name:'七友',artist:'梁汉文',genre:'流行',mood:'sad',duration:248,tags:['粤语','情歌'] },
+  { id:'demo_e1',name:'Believer',artist:'Imagine Dragons',genre:'摇滚',mood:'energetic',duration:204,tags:['摇滚','燃'] },
+  { id:'demo_e2',name:'追梦赤子心',artist:'GALA',genre:'摇滚',mood:'energetic',duration:258,tags:['励志','摇滚'] },
+  { id:'demo_e3',name:'Uptown Funk',artist:'Mark Ronson ft. Bruno Mars',genre:'Funk',mood:'energetic',duration:270,tags:['放克','欢快'] },
+  { id:'demo_e4',name:'倔强',artist:'五月天',genre:'摇滚',mood:'energetic',duration:255,tags:['励志','摇滚'] },
+  { id:'demo_ro1',name:'Perfect',artist:'Ed Sheeran',genre:'流行',mood:'romantic',duration:263,tags:['浪漫','英文'] },
+  { id:'demo_ro2',name:'告白气球',artist:'周杰伦',genre:'流行',mood:'romantic',duration:205,tags:['浪漫','甜蜜'] },
+  { id:'demo_ro3',name:'Lover',artist:'Taylor Swift',genre:'流行',mood:'romantic',duration:221,tags:['浪漫','英文'] },
+  { id:'demo_n1',name:'同桌的你',artist:'老狼',genre:'民谣',mood:'nostalgic',duration:288,tags:['校园','怀旧'] },
+  { id:'demo_n2',name:'那些年',artist:'胡夏',genre:'流行',mood:'nostalgic',duration:252,tags:['青春','怀旧'] },
+  { id:'demo_n3',name:'Yesterday Once More',artist:'Carpenters',genre:'经典流行',mood:'nostalgic',duration:239,tags:['经典','怀旧'] },
+  { id:'demo_f1',name:'Weightless',artist:'Marconi Union',genre:'Ambient',mood:'focus',duration:480,tags:['专注','氛围'] },
+  { id:'demo_f2',name:'Divenire',artist:'Ludovico Einaudi',genre:'古典/现代',mood:'focus',duration:402,tags:['钢琴','专注'] },
+  { id:'demo_f3',name:'Lo-fi Study Mix',artist:'ChilledCat',genre:'Lofi',mood:'focus',duration:360,tags:['学习','Lofi'] },
+  { id:'demo_f4',name:'Canon in D',artist:'Pachelbel',genre:'古典',mood:'focus',duration:305,tags:['古典','专注'] },
+  { id:'demo_g1',name:'起风了',artist:'买辣椒也用券',genre:'流行',mood:'calm',duration:313,tags:['青春','华语'] },
+  { id:'demo_g2',name:'平凡之路',artist:'朴树',genre:'民谣/摇滚',mood:'calm',duration:315,tags:['人生','民谣'] }
+];
+
+const DEMO_REPLIES = {
+  rain:{response:'我懂这种感觉。雨天适合慢下来，听一些和雨声交织的音乐。Lofi、爵士、或安静的钢琴，让窗外的雨变成伴奏。',songs:[{name:'雨天咖啡馆',artist:'Lofi Jazz',genre:'Lofi/Jazz',reason:'雨声和咖啡香'},{name:'Rhythm of the Rain',artist:'The Cascades',genre:'经典流行',reason:'雨天的经典老歌'},{name:'听见下雨的声音',artist:'周杰伦',genre:'华语流行',reason:'每个人都曾在雨里听见什么'},{name:'Through the Arbor',artist:'Kevin Kern',genre:'新世纪钢琴',reason:'让雨声安静地流过'}]},
+  calm:{response:'需要一个安静的角落。这些音乐像深夜的灯光，不刺眼，刚好陪伴。',songs:[{name:'夜的钢琴曲',artist:'石进',genre:'钢琴',reason:'安静的夜晚最适合'},{name:'Kiss The Rain',artist:'Yiruma',genre:'钢琴',reason:'治愈系的经典'},{name:'Snowdreams',artist:'Bandari',genre:'轻音乐',reason:'仿佛看到雪在月光下飘落'},{name:'平凡之路',artist:'朴树',genre:'民谣',reason:'放慢脚步，看看路边的风景'}]},
+  sad:{response:'有时候我们需要一首歌来理解自己的情绪。这些旋律陪你度过这一刻。',songs:[{name:'后来',artist:'刘若英',genre:'流行',reason:'每个人都有自己的"后来"'},{name:'十年',artist:'陈奕迅',genre:'流行',reason:'十年之前，十年之后'},{name:'Someone Like You',artist:'Adele',genre:'流行',reason:'让眼泪流出来会好一些'},{name:'七友',artist:'梁汉文',genre:'粤语流行',reason:'有些故事只能唱出来'}]},
+  happy:{response:'心情不错！让音乐把这份快乐放大。节奏轻快、阳光明媚的歌最适合此刻。',songs:[{name:'Sunny',artist:'Boney M.',genre:'Disco',reason:'经典就是经典'},{name:'小幸运',artist:'田馥甄',genre:'流行',reason:'青春里最甜的那段旋律'},{name:'Happy',artist:'Pharrell Williams',genre:'流行',reason:'没有比这更快乐的了'},{name:'New Boy',artist:'朴树',genre:'摇滚/流行',reason:'阳光洒进来的感觉'}]},
+  energetic:{response:'电量满格！这些歌能让你的能量翻倍。音量调大，让节奏引领你。',songs:[{name:'Believer',artist:'Imagine Dragons',genre:'摇滚',reason:'燃到炸裂'},{name:'追梦赤子心',artist:'GALA',genre:'摇滚',reason:'每次听都想往前冲'},{name:'倔强',artist:'五月天',genre:'摇滚',reason:'坚持自己的倔强'},{name:'Uptown Funk',artist:'Mark Ronson',genre:'Funk',reason:'节奏一响就停不下来'}]},
+  romantic:{response:'浪漫的氛围，需要最温柔的旋律。这些歌适合和你爱的人一起听。',songs:[{name:'Perfect',artist:'Ed Sheeran',genre:'流行',reason:'最完美的情歌之一'},{name:'告白气球',artist:'周杰伦',genre:'流行',reason:'塞纳河畔，左岸的咖啡'},{name:'Lover',artist:'Taylor Swift',genre:'流行',reason:'甜甜的恋爱味道'}]},
+  nostalgic:{response:'有些旋律一响起，就回到了那个夏天。这些老歌带着时光的味道。',songs:[{name:'同桌的你',artist:'老狼',genre:'民谣',reason:'谁没在毕业时哭过'},{name:'那些年',artist:'胡夏',genre:'流行',reason:'那些年错过的大雨'},{name:'Yesterday Once More',artist:'Carpenters',genre:'经典流行',reason:'昨日重现的感动'}]},
+  focus:{response:'需要专注的时候，背景音乐很重要。这些歌帮你进入心流状态。',songs:[{name:'Weightless',artist:'Marconi Union',genre:'Ambient',reason:'据说是最让人放松的音乐'},{name:'Canon in D',artist:'Pachelbel',genre:'古典',reason:'穿越三百年的专注力'},{name:'Lo-fi Study Mix',artist:'ChilledCat',genre:'Lofi',reason:'学霸必备背景音'},{name:'Divenire',artist:'Ludovico Einaudi',genre:'古典/现代',reason:'让思绪自由流淌'}]}
+};
+const DEMO_DEFAULT_REPLY = {response:'我能感受到你的情绪。音乐是最好的陪伴，让我为你推荐几首。',songs:[{name:'夜的钢琴曲',artist:'石进',genre:'钢琴',reason:'安静下来，聆听内心的声音'},{name:'平凡之路',artist:'朴树',genre:'民谣',reason:'每个人都有自己的路'},{name:'起风了',artist:'买辣椒也用券',genre:'流行',reason:'纵有疾风起，人生不言弃'},{name:'Canon in D',artist:'Pachelbel',genre:'古典',reason:'时光沉淀的旋律'}]};
+
+function demoAnalyzeMood(text){
+  var t = (text||'').toLowerCase();
+  if(/雨|rain|阴|潮湿|水滴/.test(t)) return 'rain';
+  if(/难过|伤心|哭|sad|悲伤|失落|抑郁|低谷|emo|崩溃/.test(t)) return 'sad';
+  if(/开心|高兴|快乐|happy|兴奋|好爽|棒|太好了/.test(t)) return 'happy';
+  if(/活力|运动|跑步|燃|炸|energetic|power|力量|冲/.test(t)) return 'energetic';
+  if(/浪漫|恋爱|love|甜蜜|约会|心动|情歌/.test(t)) return 'romantic';
+  if(/怀旧|回忆|过去|童年|以前|nostalg|老歌/.test(t)) return 'nostalgic';
+  if(/学习|专注|工作|focus|读书|写|代码|编程|复习/.test(t)) return 'focus';
+  if(/安静|平静|放松|calm|休息|睡觉|失眠|夜晚|晚上|深夜/.test(t)) return 'calm';
+  return ['calm','rain','sad','happy','energetic','romantic','nostalgic','focus'][Math.floor(Math.random()*8)];
+}
+
+function demoGetReply(userText){ return DEMO_REPLIES[demoAnalyzeMood(userText)] || DEMO_DEFAULT_REPLY; }
+
+function demoSearchSongs(keyword){
+  var kw = (keyword||'').toLowerCase(); if(!kw) return DEMO_SONGS.slice(0,8);
+  var matches = DEMO_SONGS.filter(function(s){
+    var haystack = (s.name+' '+s.artist+' '+s.genre+' '+(s.tags||[]).join(' ')).toLowerCase();
+    return kw.split(/\s+/).some(function(t){ return haystack.indexOf(t) !== -1; });
+  });
+  if(matches.length===0){ matches = [].concat(DEMO_SONGS).sort(function(){ return Math.random()-0.5; }).slice(0,5); }
+  return matches.slice(0,8);
+}
+
+// Demo Web Audio — 生成环境氛围音，无版权风险
+var demoAudioCtx=null,demoAudioGain=null,demoAudioOsc=null;
+function demoPlayAudio(mood){
+  try{
+    if(demoAudioCtx){ try{demoAudioOsc.stop();demoAudioCtx.close();}catch(e){} }
+    demoAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    demoAudioOsc = demoAudioCtx.createOscillator();
+    demoAudioGain = demoAudioCtx.createGain();
+    demoAudioOsc.connect(demoAudioGain); demoAudioGain.connect(demoAudioCtx.destination);
+    var freq={calm:220,rain:196,sad:165,happy:294,energetic:330,romantic:247,nostalgic:185,focus:175};
+    demoAudioOsc.frequency.value = freq[mood] || 220; demoAudioOsc.type = 'sine';
+    demoAudioGain.gain.setValueAtTime(0.04, demoAudioCtx.currentTime);
+    demoAudioOsc.start();
+    setTimeout(function(){
+      try{ demoAudioGain.gain.linearRampToValueAtTime(0, demoAudioCtx.currentTime+1); }catch(e){}
+    }, 25000);
+  }catch(e){}
+}
+function demoStopAudio(){
+  try{ if(demoAudioOsc){ demoAudioOsc.stop(); demoAudioOsc=null; } }catch(e){}
+  try{ if(demoAudioCtx){ demoAudioCtx.close(); demoAudioCtx=null; } }catch(e){}
+}
+function showDemoBanner(){
+  if(document.getElementById('demo-banner')) return;
+  var b = document.createElement('div');
+  b.id = 'demo-banner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(64,224,192,0.1);color:rgba(64,224,192,0.75);text-align:center;padding:3px 8px;font-size:10px;font-family:Consolas,monospace;pointer-events:none;';
+  b.textContent = '▸ DEMO MODE — 本地API未连接，使用模拟数据展示核心功能 ◂';
+  document.body.appendChild(b);
+}
+
+// Auto-detect if local APIs are reachable
+async function detectDemoMode(){
+  try{ var c=new AbortController(); var t=setTimeout(function(){ c.abort(); },DEMO_DETECT_TIMEOUT); var r=await fetch(state.apiBase+'/login/status',{signal:c.signal}); clearTimeout(t); if(r.ok){ state.demoMode=false; return false; } }catch(e){}
+  try{ var c2=new AbortController(); var t2=setTimeout(function(){ c2.abort(); },DEMO_DETECT_TIMEOUT); var r2=await fetch(state.lxApiBase+'/search?source=kw&keyword=test&page=1&limit=1',{signal:c2.signal}); clearTimeout(t2); if(r2.ok){ state.demoMode=false; return false; } }catch(e){}
+  state.demoMode = true; console.log('MUSE: Demo mode activated'); return true;
+}
+// ====================================================================
+
+// Try URL param first, then localStorage
+const urlParams = new URLSearchParams(window.location.search);
+const urlKey = urlParams.get('key');
+if (urlKey) {
+  state.apiKey = urlKey;
+  localStorage.setItem('muse_deepseek_key', urlKey);
+  // Clean URL
+  window.history.replaceState({}, '', window.location.pathname);
+} else {
+  state.apiKey = localStorage.getItem('muse_deepseek_key') || '';
+}
+
+// ============ DOM ============
+const $ = id => document.getElementById(id);
+const $app = $('app');
+const $canvas = $('danmaku-canvas');
+const $playlist = $('playlist');
+const $clockTime = $('clock-time');
+const $clockDate = $('clock-date');
+const $chatMessages = $('chat-messages');
+const $chatInput = $('chat-input');
+const $chatSend = $('chat-send');
+const $statusSong = $('status-song');
+const $audio = $('audio-player');
+const $volSlider = $('vol-slider');
+const $progressBar = $('progress-bar');
+const $timeCurrent = $('time-current');
+const $timeTotal = $('time-total');
+
+// Verify critical DOM elements
+const criticalEls = { $clockTime, $clockDate, $playlist, $chatMessages, $chatInput };
+for (const [name, el] of Object.entries(criticalEls)) {
+  if (!el) console.error('MISSING ELEMENT:', name);
+}
+
+// ============ CANVAS DANMAKU ============
+const ctx = $canvas.getContext('2d');
+let danmakuItems = [];
+let danmakuLastTime = 0;
+
+function resizeCanvas(){
+  const rect = $app.getBoundingClientRect();
+  $canvas.width = rect.width || window.innerWidth;
+  $canvas.height = rect.height || window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function spawnDanmaku(text, size, alpha){
+  danmakuItems.push({
+    text, size, alpha,
+    x: $canvas.width + 20,
+    y: 20 + Math.random() * ($canvas.height * 0.8 - size),
+    speed: 0.4 + Math.random() * 1.0
+  });
+}
+
+let danmakuVisible = true;
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    danmakuVisible = false;
+  } else {
+    danmakuLastTime = performance.now();
+    danmakuVisible = true;
+  }
+});
+
+function renderDanmaku(timestamp){
+  if (!danmakuLastTime) danmakuLastTime = timestamp;
+  let dt = timestamp - danmakuLastTime;
+  // If tab was in background, treat as single frame to prevent bunching
+  if (dt > 200) { dt = 16.667; }
+  danmakuLastTime = timestamp;
+  const speedScale = dt / 16.667;
+
+  ctx.clearRect(0, 0, $canvas.width, $canvas.height);
+  for (let i = danmakuItems.length - 1; i >= 0; i--) {
+    const d = danmakuItems[i];
+    d.x -= d.speed * speedScale;
+    if (d.x < -ctx.measureText(d.text).width - 30) {
+      danmakuItems.splice(i, 1);
+      continue;
+    }
+    ctx.font = `${d.size}px "Courier New",monospace`;
+    ctx.fillStyle = `rgba(64,224,192,${d.alpha})`;
+    ctx.shadowColor = 'rgba(64,224,192,0.3)';
+    ctx.shadowBlur = 5;
+    ctx.fillText(d.text, d.x, d.y);
+    ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(renderDanmaku);
+}
+requestAnimationFrame(renderDanmaku);
+
+
+// ===== PRELOAD CHECK: at 70% progress, expand if near end =====
+function checkPreload(){
+  if (!state.apiKey || state.isPreloading) return;
+  if (!$audio.duration || isNaN($audio.duration)) return;
+  if (state.currentIndex < 0 || state.playlist.length === 0) return;
+  if (state.preloadedForIndex === state.currentIndex) return;
+
+  const pct = $audio.currentTime / $audio.duration;
+  if (pct < 0.7) return;
+
+  // Preload if less than 3 songs remain after current
+  const remaining = state.playlist.length - state.currentIndex - 1;
+  if (remaining >= 3) return;
+
+  state.preloadedForIndex = state.currentIndex;
+  const currentItem = state.playlist[state.currentIndex];
+  const seed = { name: currentItem.name || '', artist: currentItem.artist || '' };
+
+  seedExpand(seed, 1).then(async (songs) => {
+    if (songs.length > 0) {
+      await enrichAndAddSongs(songs, state.currentMood);
+      updatePlaylistUI();
+    }
+  }).catch(() => {});
+}
+
+// ===== NETEASE COMMENTS DANMAKU =====
+async function fetchNeteaseComments(songId){
+  if (!songId) return [];
+  if (state.demoMode) {
+    // Return demo comments matching current mood
+    var mood = state.currentMood || 'calm';
+    var presets = danmakuPresets[mood] || danmakuPresets['calm'];
+    return presets.map(function(p){ return p.text.replace(/^\[.*\]\s*/,'').replace(/".*--\s*@.*"/,'').trim(); }).filter(function(c){ return c.length > 2; });
+  }
+  try {
+    const url = NETEASE_BASE + '/comment/music?id=' + songId + '&limit=15&realIP=' + NETEASE_REAL_IP;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const comments = (data.data?.comments || data.comments || []);
+    return comments
+      .map(c => (c.content || '').replace(/[\r\n]+/g, ' ').trim())
+      .filter(c => c.length > 2 && c.length < 80)
+      .slice(0, 10);
+  } catch(e) {
+    return [];
+  }
+}
+
+function startDanmakuFromComments(comments, songName){
+  danmakuItems = [];
+  const list = [];
+  // Song name header
+  list.push({text: '[ ' + songName + ' ]', size: 17, alpha: 0.7});
+  // Real comments
+  comments.forEach((c, i) => {
+    list.push({text: '"' + c + '" -- @乐迷', size: 10 + Math.floor(Math.random() * 5), alpha: 0.22 + Math.random() * 0.15});
+  });
+  // Fallback if no comments
+  if (list.length <= 1) {
+    const presets = danmakuPresets['calm'];
+    presets.forEach(p => list.push(p));
+  }
+  streamLoop(list);
+}
+
+// Danmaku content presets
+const danmakuPresets = {
+  rain: [
+    {text:'雨下一整晚... 城市在灯海里漂流...',size:14,alpha:0.55},
+    {text:'"这首歌陪我走过了最难的那个冬天" -- @晚风',size:9,alpha:0.28},
+    {text:'[ 听见下雨的声音 ]',size:16,alpha:0.68},
+    {text:'于是我不停地拨动琴弦... 直到音符长出羽毛',size:12,alpha:0.48},
+    {text:'"北京下雨了，你在哪里" -- @北漂小张',size:9,alpha:0.25},
+    {text:'窗外的雨滴 落在青石板上',size:14,alpha:0.55},
+    {text:'"每次听都会想起大学宿舍的雨夜" -- 匿名',size:8,alpha:0.22},
+  ],
+  calm: [
+    {text:'[ 安静的风 吹过耳畔 ]',size:15,alpha:0.62},
+    {text:'夜色温柔... 月光洒在书页上...',size:12,alpha:0.48},
+    {text:'"加班到凌晨，这首歌让我平静下来" -- @程序员小陈',size:9,alpha:0.26},
+    {text:'世界在此刻 放慢了速度',size:13,alpha:0.5},
+    {text:'"一个人走路回家的BGM" -- @城市漫游者',size:8,alpha:0.24},
+  ],
+  happy: [
+    {text:'[ 阳光洒满整个房间 ]',size:15,alpha:0.6},
+    {text:'嘴角不自觉地上扬... 今天是个好日子',size:12,alpha:0.48},
+    {text:'"听到这首歌就想跳舞！" -- @快乐小鱼',size:9,alpha:0.28},
+    {text:'节奏在血液里跳动... 停不下来',size:13,alpha:0.5},
+  ],
+  sad: [
+    {text:'[ 有些情绪只有音乐能懂 ]',size:15,alpha:0.58},
+    {text:'思念是一条没有尽头的河流...',size:12,alpha:0.48},
+    {text:'"失恋第37天，单曲循环" -- @匿名',size:9,alpha:0.26},
+    {text:'眼泪落在琴键上 开出透明的花',size:13,alpha:0.5},
+  ],
+  energetic: [
+    {text:'[ 电力全开 音量拉满 ]',size:15,alpha:0.62},
+    {text:'心跳加速... 这个节奏让人停不下来',size:12,alpha:0.5},
+    {text:'"跑步时的最佳BGM！" -- @运动达人',size:9,alpha:0.28},
+  ],
+  romantic: [
+    {text:'[ 浪漫是此刻唯一的关键词 ]',size:15,alpha:0.6},
+    {text:'空气中飘着甜蜜的味道...',size:12,alpha:0.48},
+    {text:'"和ta一起听的歌" -- @幸福的人',size:9,alpha:0.26},
+  ],
+  nostalgic: [
+    {text:'[ 往事如烟 在旋律中浮现 ]',size:15,alpha:0.58},
+    {text:'那些年的夏天... 回不去的校园时光',size:12,alpha:0.48},
+    {text:'"每次听这首都会哭" -- @怀旧的人',size:9,alpha:0.26},
+  ],
+};
+
+function startDanmakuStream(mood, songName){
+  danmakuItems = [];
+  const presets = danmakuPresets[mood] || danmakuPresets['calm'];
+  const list = songName
+    ? [{text:`[ ${songName} ]`, size:17, alpha:0.72}, ...presets]
+    : [...presets];
+  streamLoop(list);
+}
+
+let danmakuStreamLastSpawn = 0;
+let danmakuStreamTimer = 0;
+function streamLoop(list){
+  let idx = 0;
+  if (danmakuStreamTimer) clearTimeout(danmakuStreamTimer);
+  function push(){
+    if (idx >= list.length) { idx = 0; }
+    // Don't spawn if tab is in background
+    if (danmakuVisible) {
+      const now = performance.now();
+      if (now - danmakuStreamLastSpawn > 1200) {
+        spawnDanmaku(list[idx].text, list[idx].size, list[idx].alpha);
+        danmakuStreamLastSpawn = now;
+        idx++;
+      }
+    }
+    danmakuStreamTimer = setTimeout(push, 1600 + Math.random() * 2400);
+  }
+  push();
+}
+
+// ============ CLOCK ============
+function updateClock(){
+  if (!$clockTime || !$clockDate) return;
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  $clockTime.innerHTML = h + '<span class="colon" style="animation:colon-blink 1s step-end infinite;color:rgba(64,224,192,0.4);">:</span>' + m;
+  const days = ['日','一','二','三','四','五','六'];
+  $clockDate.textContent =
+    now.getFullYear() + '.' +
+    String(now.getMonth() + 1).padStart(2, '0') + '.' +
+    String(now.getDate()).padStart(2, '0') +
+    ' · 星期' + days[now.getDay()];
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+// ============ AUDIO ============
+$audio.volume = state.volume;
+$volSlider.value = state.volume * 100;
+
+$volSlider.addEventListener('input', () => {
+  state.volume = $volSlider.value / 100;
+  $audio.volume = state.volume;
+});
+
+$audio.addEventListener('ended', () => {
+  // Auto-play next track
+  setTimeout(() => nextTrack(), 300);
+});
+$audio.addEventListener('error', () => {
+  const item = state.playlist[state.currentIndex];
+  if (item) addChatMsg('agent', '> 无法播放 "' + item.name + '"，尝试下一首...');
+  nextTrack();
+});
+$audio.addEventListener('play', () => {
+  state.isPlaying = true;
+  updatePlayBtn();
+  updateStatusBar();
+});
+$audio.addEventListener('pause', () => {
+  state.isPlaying = false;
+  updatePlayBtn();
+});
+$audio.addEventListener('timeupdate', () => {
+  updateProgress();
+  checkPreload();
+});
+$audio.addEventListener('loadedmetadata', () => {
+  $timeTotal.textContent = formatTime($audio.duration);
+  $progressBar.max = $audio.duration || 0;
+});
+
+function updateProgress(){
+  if (!$audio.duration || isNaN($audio.duration)) return;
+  $progressBar.value = $audio.currentTime;
+  $timeCurrent.textContent = formatTime($audio.currentTime);
+}
+
+$progressBar.addEventListener('input', () => {
+  $audio.currentTime = $progressBar.value;
+  updateProgress();
+});
+
+function formatTime(s){
+  if (isNaN(s) || !isFinite(s)) return '--:--';
+  // Detect millisecond values (> 7200 = 2 hours in seconds ≈ 7.2M ms)
+  if (s > 7200) { s = s / 1000; }
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function updatePlayBtn(){
+  const btn = $('btn-play');
+  if (btn) btn.textContent = state.isPlaying ? '| |' : '>';
+}
+
+function loadAndPlay(index){
+  if (index < 0 || index >= state.playlist.length) return;
+  state.currentIndex = index;
+  state.preloadedForIndex = -1;
+  const item = state.playlist[index];
+  if (item.url) {
+    if (typeof item.url === 'string' && item.url.indexOf('demo://') === 0) {
+      // Demo mode — use Web Audio API
+      demoPlayAudio(item.mood || 'calm');
+      state.isPlaying = true;
+      updatePlayBtn();
+      updateStatusBar();
+      // Simulate progress for demo
+      var startTime = Date.now();
+      var demoDuration = (item.duration && typeof item.duration === 'number') ? item.duration : 240;
+      var demoInterval = setInterval(function(){
+        if (!state.isPlaying || state.currentIndex !== index) { clearInterval(demoInterval); return; }
+        var elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed >= demoDuration) { clearInterval(demoInterval); demoStopAudio(); state.isPlaying = false; updatePlayBtn(); nextTrack(); }
+        else { $progressBar.value = elapsed; $timeCurrent.textContent = formatTime(elapsed); }
+      }, 500);
+      // Store interval for cleanup
+      if ($audio._demoInterval) clearInterval($audio._demoInterval);
+      $audio._demoInterval = demoInterval;
+    } else {
+      demoStopAudio();
+      $audio.src = item.url;
+      $audio.play().catch(e => {
+        addChatMsg('agent', '> 播放失败，尝试下一首...');
+        setTimeout(() => nextTrack(), 500);
+      });
+    }
+  } else {
+    addChatMsg('agent', '> 该歌曲暂无播放链接，自动跳过');
+    setTimeout(() => nextTrack(), 300);
+  }
+  updatePlaylistUI();
+  updateStatusBar();
+  danmakuItems = [];
+  const songId = item._neteaseId || item.neteaseId;
+  if (songId) {
+    fetchNeteaseComments(songId).then(comments => {
+      danmakuItems = [];
+      startDanmakuFromComments(comments, item.name);
+    }).catch(() => {
+      startDanmakuStream(item.mood || 'calm', item.name);
+    });
+  } else {
+    startDanmakuStream(item.mood || 'calm', item.name);
+  }
+  triggerEndExpansion();
+}
+
+function triggerEndExpansion(){
+  if (!state.apiKey || !state.seedSong || state.isPreloading) return;
+  const remaining = state.playlist.length - state.currentIndex - 1;
+  if (remaining > 0) return;
+  if (state.preloadedForIndex === state.currentIndex) return;
+  state.preloadedForIndex = state.currentIndex;
+  $statusSong.textContent = '扩散中...';
+  seedExpand(state.seedSong, 5).then(async (songs) => {
+    if (songs.length > 0) {
+      await enrichAndAddSongs(songs, state.currentMood);
+      updatePlaylistUI();
+      $statusSong.textContent = state.playlist[state.currentIndex]?.name || '就绪';
+    }
+  }).catch(() => {});
+}
+
+function nextTrack(){
+  demoStopAudio(); // Clean up any demo audio
+  if (state.playlist.length === 0) return;
+  if (state.currentIndex >= state.playlist.length - 1) {
+    // At last song — try to expand before giving up
+    if (state.seedSong) {
+      if (state.isPreloading && !state._waitingForPreload) {
+        // checkPreload() is already fetching. Poll until it completes, then retry.
+        state._waitingForPreload = true;
+        $statusSong.textContent = '加载更多...';
+        let polls = 0;
+        const MAX_POLLS = 100;
+        const pollForPreload = () => {
+          polls++;
+          if (!state.isPreloading) {
+            state._waitingForPreload = false;
+            nextTrack();
+            return;
+          }
+          if (polls < MAX_POLLS) {
+            setTimeout(pollForPreload, 400);
+          } else {
+            state._waitingForPreload = false;
+            $audio.pause();
+            state.isPlaying = false;
+            updatePlayBtn();
+            $statusSong.textContent = '列表已播完';
+          }
+        };
+        setTimeout(pollForPreload, 400);
+        return;
+      }
+      if (state.isPreloading) {
+        // Already waiting for preload, don't start another poll loop
+        return;
+      }
+      $statusSong.textContent = '加载更多...';
+      seedExpand(state.seedSong, 3).then(async (songs) => {
+        if (songs.length > 0) {
+          await enrichAndAddSongs(songs, state.currentMood);
+          updatePlaylistUI();
+          // Now try next track again
+          const next = state.currentIndex + 1;
+          if (next < state.playlist.length) {
+            loadAndPlay(next);
+            return;
+          }
+        }
+        // Still nothing — stop
+        $audio.pause();
+        state.isPlaying = false;
+        updatePlayBtn();
+        $statusSong.textContent = '列表已播完';
+      }).catch(() => {
+        $audio.pause();
+        state.isPlaying = false;
+        updatePlayBtn();
+        $statusSong.textContent = '列表已播完';
+      });
+      return;
+    }
+    $audio.pause();
+    state.isPlaying = false;
+    updatePlayBtn();
+    $statusSong.textContent = '列表已播完';
+    return;
+  }
+  let next = state.currentIndex + 1;
+  // Skip unplayable songs
+  while (next < state.playlist.length) {
+    const item = state.playlist[next];
+    if (item.url) { loadAndPlay(next); return; }
+    next++;
+  }
+  // No more playable songs in remaining list
+  $audio.pause();
+  state.isPlaying = false;
+  updatePlayBtn();
+  $statusSong.textContent = '无更多可播歌曲';
+}
+
+function prevTrack(){
+  if (state.playlist.length === 0) return;
+  if (state.currentIndex <= 0) return; // Already at first song
+  loadAndPlay(state.currentIndex - 1);
+}
+
+$('btn-play').addEventListener('click', () => {
+  if (state.playlist.length === 0) return;
+  if (state.currentIndex < 0) { loadAndPlay(0); return; }
+  if (state.isPlaying) {
+    if (state.demoMode) { demoStopAudio(); }
+    else { $audio.pause(); }
+  } else {
+    if (state.demoMode) {
+      var item = state.playlist[state.currentIndex];
+      if (item) demoPlayAudio(item.mood || 'calm');
+    } else { $audio.play().catch(e => {}); }
+  }
+});
+$('btn-prev').addEventListener('click', prevTrack);
+$('btn-next').addEventListener('click', nextTrack);
+
+// ============ PLAYLIST UI ============
+function updatePlaylistUI(){
+  if (state.playlist.length === 0) {
+    $playlist.innerHTML = '<div class="empty-state"><span class="icon">[]</span>等待 Agent 推荐歌曲...</div>';
+    return;
+  }
+  $playlist.innerHTML = state.playlist.map((item, i) => {
+    const isActive = i === state.currentIndex;
+    const isPlayingNow = isActive && state.isPlaying;
+    const num = String(i + 1).padStart(2, '0');
+    return '<div class="playlist-item' + (isActive ? ' active' : '') + '" data-index="' + i + '">' +
+      '<div class="dot' + (isActive ? ' active' : ' inactive') + '"></div>' +
+      '<span class="index">' + num + '</span>' +
+      '<span class="name">' + esc(item.name) + '</span>' +
+      '<span class="duration">' + (item.duration || '--:--') + '</span>' +
+      (isPlayingNow ? '<span class="playing-indicator">></span>' : '') +
+    '</div>';
+  }).join('');
+
+  // Add click handlers
+  $playlist.querySelectorAll('.playlist-item').forEach(el => {
+    el.addEventListener('click', () => {
+      loadAndPlay(parseInt(el.dataset.index));
+    });
+  });
+}
+
+function addToPlaylist(song){
+  if (!state.playlist.find(s => s.name === song.name)) {
+    state.playlist.push(song);
+  }
+  updatePlaylistUI();
+}
+
+function updateStatusBar(){
+  if (state.currentIndex >= 0 && state.playlist[state.currentIndex]) {
+    const item = state.playlist[state.currentIndex];
+    $statusSong.textContent = state.isPlaying ? '> ' + item.name : '已暂停';
+  } else {
+    $statusSong.textContent = '就绪';
+  }
+}
+
+// ============ AGENT / DEEPSEEK ============
+const SYSTEM_PROMPT_MOOD = `你是 MUSE，一个情绪音乐助手。风格：极光绿像素未来主义。
+
+## 核心规则
+当用户描述心情/情绪/想法时，你:
+1. 用1-2句话共情回应
+2. 精准判断音乐分类标签（从下方流派体系中选择最匹配的1-2个）
+3. 推荐5首该流派最具代表性的真实歌曲
+4. 在JSON的mood字段填入分类标签
+
+## 音乐分类 Skill — 完整流派体系
+
+当用户明确指定流派、风格、语种、场景时，严格限定在该分类内推荐。当用户未指定但描述了情绪时，根据描述自动匹配最佳流派。
+
+### 按语种/地域分类
+**[华语流行]** 主流华语流行、国语流行、粤语流行、台湾流行
+**[华语民谣]** 城市民谣、校园民谣、独立民谣
+**[华语摇滚]** 中国摇滚、独立摇滚、后摇滚
+**[华语R&B]** 华语节奏布鲁斯、中国风R&B、当代华语R&B
+**[华语说唱]** 中文说唱、川渝说唱、硬核说唱
+**[国风/古风]** 中国风、古风、戏腔、国风电音
+**[日系ACG]** Anisong(动漫OP/ED/OST)、Vocaloid/V家、同人音乐、游戏配乐、VTuber歌曲
+**[J-Pop]** 日本流行、J-Rock、City Pop、日系独立
+**[日系R&B]** 日本R&B、J-Fusion/日式爵士、涩谷系
+**[韩系]** K-Pop、K-R&B、K-HipHop、韩剧OST
+**[欧美流行]** Western Pop、Electropop、Synth-pop、Dance-pop
+**[欧美摇滚]** Classic Rock、Alternative Rock、Indie Rock、Post-punk
+**[欧美R&B]** Contemporary R&B、Neo-Soul、Funk、Soul、PBR&B
+**[欧美说唱]** Hip-Hop、Trap、Boom Bap、Conscious Rap
+**[欧美电子]** EDM、House、Techno、Drum & Bass、Dubstep、Ambient
+**[爵士]** Smooth Jazz、Bebop、Cool Jazz、Acid Jazz、Bossa Nova
+**[古典]** 古典主义、浪漫主义、巴洛克、现代古典、极简主义
+**[世界音乐]** 拉美(Latin Pop/Reggaeton/Bossa Nova)、法语流行、北欧电子
+
+### 按场景/功能分类
+**[学习/专注]** Lo-fi Hip Hop、后摇、古典钢琴、氛围电子、白噪音
+**[运动/健身]** 硬摇滚、Trap、Drum & Bass、Electro House、Big Room
+**[放松/冥想]** 新世纪、Ambient、钢琴独奏、自然音效、颂钵
+**[深夜/失眠]** 慢核(Slowcore)、梦幻流行(Dream Pop)、独立民谣
+**[怀旧/复古]** City Pop、蒸汽波(Vaporwave)、80s Synth-pop、Disco、港台老歌
+**[浪漫/约会]** Bossa Nova、Smooth Jazz、法式香颂、R&B情歌
+**[公路/驾驶]** 经典摇滚、合成器流行、独立流行、乡村摇滚
+**[派对/聚会]** Dance Pop、Funk、Disco、Latin Pop、雷鬼
+
+### 按情绪映射流派
+**[平静/舒缓]** → 氛围电子/新世纪/后摇/民谣
+**[开心/兴奋]** → Dance Pop/Funk/City Pop/K-Pop
+**[伤感/忧郁]** → 慢核/Dream Pop/独立民谣/蓝调
+**[愤怒/宣泄]** → 硬摇滚/朋克/金属核/硬核说唱
+**[浪漫/温柔]** → Bossa Nova/Smooth Jazz/法式香颂/R&B情歌
+**[孤独/沉思]** → 后摇滚/独立民谣/古典钢琴/Ambient
+**[怀旧/回忆]** → City Pop/Vaporwave/港台经典老歌/80s金曲
+**[振奋/力量]** → 史诗管弦/体育场摇滚/Drum & Bass/Trap
+
+严格只返回JSON:
+{
+  "response": "回应",
+  "mood": "流派/场景/情绪标签",
+  "artist": "歌手名(仅当用户指定歌手时填写，否则留空)",
+  "genre": "主要流派(华语流行/日系ACG/欧美R&B等)",
+  "songs": [
+    {"name":"歌名","artist":"歌手","genre":"风格","reason":"推荐理由(一句话)"}
+  ]
+}`;
+
+const SYSTEM_PROMPT_SEED = `你是 MUSE，一个音乐推荐助手。
+
+## 流派衍生规则
+基于用户正在收听的种子歌曲，推荐风格相同或最接近流派的歌曲。
+
+衍生规则（按优先级）:
+1. 如果种子是「华语流行」→ 推荐华语流行、粤语流行、台湾流行
+2. 如果种子是「日系ACG」→ 推荐Anisong、Vocaloid、同人音乐、J-Rock
+3. 如果种子是「日系R&B」→ 推荐J-Fusion、City Pop、涩谷系、当代日本R&B
+4. 如果种子是「J-Pop」→ 推荐日本流行、J-Rock、City Pop、日系独立
+5. 如果种子是「欧美R&B」→ 推荐Contemporary R&B、Neo-Soul、Funk、PBR&B
+6. 如果种子是「欧美流行」→ 推荐Western Pop、Electropop、Dance-pop
+7. 如果种子是「国风/古风」→ 推荐中国风、古风、戏腔、国风电音
+8. 如果种子是「韩系」→ 推荐K-Pop、K-R&B、韩剧OST
+9. 如果种子是「爵士」→ 推荐Smooth Jazz、Bossa Nova、Acid Jazz
+10. 如果种子是「电子/氛围」→ 推荐Ambient、Lo-fi、Synthwave
+
+核心原则: 保持语种和风格的一致性，不要跨语种推荐（除非用户明确要求）。
+
+严格只返回JSON:
+{
+  "response": "简短推荐语",
+  "songs": [
+    {"name":"歌名","artist":"歌手","genre":"风格","reason":"推荐理由(一句话)"}
+  ]
+}`;
+
+const FETCH_TIMEOUT = 30000;
+
+async function fetchWithTimeout(url, options, timeoutMs){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || FETCH_TIMEOUT);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function callAgent(systemPrompt, userMessage){
+  if (state.demoMode || !state.apiKey) {
+    if (state.demoMode) {
+      // Return demo reply based on user input
+      var reply = demoGetReply(userMessage);
+      return {
+        mood: demoAnalyzeMood(userMessage),
+        response: reply.response,
+        songs: reply.songs
+      };
+    }
+    return null;
+  }
+
+  try {
+    const res = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.8,
+        max_tokens: 2500
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('API ' + res.status + ': ' + errText);
+    }
+
+    const data = await res.json();
+    const content = data.choices[0].message.content;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('无法解析响应');
+    return JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      console.error('Agent request timed out');
+    } else {
+      console.error('Agent error:', e);
+    }
+    return null;
+  }
+}
+
+// Seed expansion: get new songs based on a seed song
+async function seedExpand(seedSong, count){
+  if (state.demoMode) {
+    return demoSearchSongs(seedSong.name + ' ' + seedSong.artist).slice(0, count).map(function(s){
+      return { name: s.name, artist: s.artist, genre: s.genre, reason: 'Demo推荐' };
+    });
+  }
+  if (!state.apiKey || state.isPreloading) return [];
+  state.isPreloading = true;
+  try {
+    const moodInfo = seedSong.mood ? '，流派/风格为「' + seedSong.mood + '」' : '';
+    const prompt = '基于歌曲《' + seedSong.name + '》' + (seedSong.artist ? ' - ' + seedSong.artist : '')
+      + '，推荐' + count + '首风格相似的歌曲' + moodInfo
+      + '。请严格限定在与种子相同的语种和流派内衍生，不要跨语种推荐。'
+      + (count < 5 ? '不要重复之前推荐过的。' : '');
+    const result = await callAgent(SYSTEM_PROMPT_SEED, prompt);
+    if (!result || !result.songs) return [];
+    return result.songs;
+  } finally {
+    state.isPreloading = false;
+  }
+}
+
+// ============ MULTI-SOURCE MUSIC API ============
+let NETEASE_BASE = state.apiBase;
+let LX_API_BASE = state.lxApiBase;
+const NETEASE_REAL_IP = generateRandomChineseIP();
+
+// Resolve playable URL from any platform via the Python API server
+async function resolveUrl(source, songId, quality){
+  quality = quality || '320k';
+  try {
+    // Try requested quality first, fall back to 128k
+    let res = await fetchWithTimeout(LX_API_BASE + '/url?source=' + source + '&songId=' + songId + '&quality=' + quality, {}, 8000);
+    if (!res.ok) return null;
+    let data = await res.json();
+    if (data.code === 200 && data.url) return data.url;
+    // Fallback to 128k
+    if (quality !== '128k') {
+      res = await fetchWithTimeout(LX_API_BASE + '/url?source=' + source + '&songId=' + songId + '&quality=128k', {}, 6000);
+      if (res.ok) {
+        data = await res.json();
+        if (data.code === 200 && data.url) return data.url;
+      }
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+// KuGou search — via local API proxy (avoids CORS)
+async function kugouSearch(keyword, limit){
+  limit = limit || 20;
+  try {
+    const url = LX_API_BASE + '/search?source=kg&keyword=' + encodeURIComponent(keyword) + '&page=1&limit=' + limit;
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const songs = data.data || [];
+    return songs.filter(s => (s.duration || 0) > 45);
+  } catch(e) { console.error('KuGou search error:', e); return []; }
+}
+
+// QQ Music search — via local API proxy (avoids CORS)
+async function qqSearch(keyword, limit){
+  limit = limit || 20;
+  try {
+    const url = LX_API_BASE + '/search?source=tx&keyword=' + encodeURIComponent(keyword) + '&page=1&limit=' + limit;
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const songs = data.data || [];
+    return songs.filter(s => (s.duration || 0) > 45);
+  } catch(e) { console.error('QQ search error:', e); return []; }
+}
+
+// KuWo search — via local API proxy (public API, no login needed)
+async function kuwoSearch(keyword, limit){
+  limit = limit || 20;
+  try {
+    const url = LX_API_BASE + '/search?source=kw&keyword=' + encodeURIComponent(keyword) + '&page=1&limit=' + limit;
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const songs = data.data || [];
+    return songs.filter(s => (s.duration || 0) > 45);
+  } catch(e) { console.error('KuWo search error:', e); return []; }
+}
+
+// KuWo URL via public LX Music API proxy (no login)
+async function kuwoGetUrl(songId, quality){
+  quality = quality || '128k';
+  try {
+    const res = await fetchWithTimeout(LX_API_BASE + '/url/public?source=kw&songId=' + songId + '&quality=' + quality, {}, 8000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url || null;
+  } catch(e) { return null; }
+}
+
+// Generic multi-platform search: try all sources, return URLs
+// Respects state.searchPlatform to limit or prioritize sources
+async function multiSourceSearch(songName, artist){
+  if (state.demoMode) {
+    var matches = demoSearchSongs(songName + ' ' + artist);
+    if (matches.length > 0) {
+      var m = matches[0];
+      return { url: 'demo://'+m.id, source: 'Demo', id: m.id, name: m.name, artist: m.artist, duration: m.duration };
+    }
+    return null;
+  }
+  const keyword = songName + ' ' + artist;
+  const results = [];
+  const plat = state.searchPlatform || 'auto';
+  const MIN_MATCH_SCORE = 45;
+
+  function qualifies(match){
+    return matchScore({name: songName, artist: artist}, {name: match.name, artist: match.artist}) >= MIN_MATCH_SCORE;
+  }
+
+  // Helper: search NetEase only
+  async function tryNetease(){
+    try {
+      const neMatches = await neteaseSearch(keyword, 8);
+      for (const m of neMatches) {
+        const mArtist = (m.artists || m.ar || []).map(a => a.name || a).join('/');
+        if (!qualifies({name: m.name, artist: mArtist})) continue;
+        const u = await neteaseGetUrl(m.id);
+        if (u) {
+          results.push({ url: u, source: '网易云', id: m.id, name: m.name, artist: mArtist, duration: (m.duration || 0) / 1000 });
+          return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  // Helper: search KuGou only
+  async function tryKugou(){
+    try {
+      const kgMatches = await kugouSearch(keyword, 8);
+      for (const m of kgMatches) {
+        if (!qualifies({name: m.name, artist: m.artist || ''})) continue;
+        const u = await resolveUrl('kg', m.id, '320k');
+        if (u) {
+          results.push({ url: u, source: '酷狗', id: m.id, name: m.name, artist: m.artist || '', duration: m.duration });
+          return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  // Helper: search QQ only
+  async function tryQQ(){
+    try {
+      const qqMatches = await qqSearch(keyword, 8);
+      for (const m of qqMatches) {
+        if (!qualifies({name: m.name, artist: m.artist || ''})) continue;
+        const u = await resolveUrl('tx', m.id, '320k');
+        if (u) {
+          results.push({ url: u, source: 'QQ音乐', id: m.id, name: m.name, artist: m.artist || '', duration: m.duration });
+          return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  // Helper: search KuWo via local proxy + public API for URL
+  async function tryKuwo(){
+    try {
+      const kwMatches = await kuwoSearch(keyword, 8);
+      for (const m of kwMatches) {
+        if (!qualifies({name: m.name, artist: m.artist || ''})) continue;
+        const u = await kuwoGetUrl(m.id, '128k');
+        if (u) {
+          results.push({ url: u, source: '酷我', id: m.id, name: m.name, artist: m.artist || '', duration: m.duration });
+          return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  if (plat === 'netease') { await tryNetease(); }
+  else if (plat === 'web') { await tryKuwo(); }
+  else {
+    // Auto: try all in priority order
+    await tryNetease();
+    if (!results.length) await tryKugou();
+    if (!results.length) await tryQQ();
+    if (!results.length) await tryKuwo();
+  }
+
+  return results.length ? results[0] : null;
+}
+
+async function neteaseSearch(keyword, limit){
+  if (state.demoMode) return []; // Skip real API calls in demo mode
+  limit = limit || 8;
+  try {
+    let url = NETEASE_BASE + '/search?keywords=' + encodeURIComponent(keyword) + '&limit=' + limit + '&realIP=' + NETEASE_REAL_IP;
+    if (state.neteaseCookie) url += '&cookie=' + encodeURIComponent(state.neteaseCookie);
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const songs = data.result?.songs || [];
+    return songs.filter(s => s.duration > 45000);
+  } catch (e) {
+    console.error('Netease search error:', e);
+    return [];
+  }
+}
+
+function checkAudioDuration(url){
+  return new Promise((resolve) => {
+    const a = new Audio();
+    a.preload = 'metadata';
+    const timer = setTimeout(() => { a.src = ''; resolve(0); }, 5000);
+    a.onloadedmetadata = () => {
+      clearTimeout(timer);
+      const d = a.duration;
+      a.src = '';
+      resolve(isNaN(d) ? 0 : d);
+    };
+    a.onerror = () => { clearTimeout(timer); resolve(0); };
+    a.src = url;
+  });
+}
+
+async function neteaseGetUrl(songId){
+  try {
+    let url = NETEASE_BASE + '/song/url?id=' + songId + '&realIP=' + NETEASE_REAL_IP;
+    if (state.neteaseCookie) url += '&cookie=' + encodeURIComponent(state.neteaseCookie);
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.data?.[0]?.url || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ===== WEB SEARCH: find song on music platforms via DeepSeek =====
+async function webSearchSongUrl(songName, artist){
+  if (!state.apiKey) return null;
+  const fullName = '《' + songName + '》' + (artist ? ' ' + artist : '');
+
+  // Step 1: search for the song's page on NetEase Music and other platforms
+  const searchPrompt = `搜索歌曲${fullName}在各大音乐平台的页面。
+目标: 找到该歌曲在网易云音乐(music.163.com)的页面URL，以及其他可播放平台的页面。
+
+请返回严格JSON:
+{
+  "neteaseId": "网易云歌曲ID(纯数字，如1234567，若未找到则为null)",
+  "neteaseUrl": "网易云歌曲页完整URL(若未找到则为null)",
+  "otherUrls": ["其他平台可播放页面的完整URL"]
+}`;
+
+  let neteaseId = null;
+  try {
+    const res = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: '你是音乐搜索助手。通过搜索引擎查找歌曲在各音乐平台的页面。' },
+          { role: 'user', content: searchPrompt }
+        ],
+        tools: [{ type: 'web_search', web_search: { enable: true } }],
+        tool_choice: { type: 'web_search' },
+        temperature: 0.3,
+        max_tokens: 800,
+        stream: false
+      })
+    }, 25000);
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || '';
+
+      // Try to extract NetEase song ID from the response
+      const idMatch1 = content.match(/"neteaseId"\s*:\s*"?(\d+)"?/);
+      const idMatch2 = content.match(/music\.163\.com\/song\?id=(\d+)/);
+      const idMatch3 = content.match(/\/song\?id=(\d+)/);
+      neteaseId = (idMatch1 && idMatch1[1]) || (idMatch2 && idMatch2[1]) || (idMatch3 && idMatch3[1]) || null;
+    }
+  } catch(e) {
+    console.error('Web search step1 error:', e);
+  }
+
+  // Step 2: if we found a NetEase ID, try to get URL via local API
+  if (neteaseId) {
+    try {
+      const url = await neteaseGetUrl(neteaseId);
+      if (url) {
+        const dur = await checkAudioDuration(url);
+        if (dur > 45) return { url, source: '网易云(Web)', neteaseId, duration: dur };
+      }
+    } catch(e) {}
+  }
+
+  // Step 3: fallback — search for any playable audio URL
+  try {
+    const res2 = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: '搜索可播放的音频文件URL。返回找到的第一个有效mp3/m4a链接(仅URL)，如果找不到返回"none"。' },
+          { role: 'user', content: '搜索歌曲' + fullName + ' 在线播放 音频文件链接' }
+        ],
+        tools: [{ type: 'web_search', web_search: { enable: true } }],
+        tool_choice: { type: 'web_search' },
+        temperature: 0.2,
+        max_tokens: 400,
+        stream: false
+      })
+    }, 20000);
+
+    if (res2.ok) {
+      const data2 = await res2.json();
+      const content2 = data2.choices?.[0]?.message?.content || '';
+      const urlMatch = content2.match(/https?:\/\/[^\s"'\n\r]+\.(mp3|m4a|aac|ogg)(\?[^\s"'\n\r]*)?/i);
+      if (urlMatch) {
+        const url = urlMatch[0];
+        const dur = await checkAudioDuration(url);
+        if (dur > 45) return { url, source: '网络', neteaseId: null, duration: dur };
+      }
+    }
+  } catch(e) {}
+
+  return null;
+}
+
+function addChatMsg(type, text){
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + type;
+  div.textContent = text;
+  $chatMessages.appendChild(div);
+  $chatMessages.scrollTop = $chatMessages.scrollHeight;
+}
+
+function addRecCard(song){
+  const div = document.createElement('div');
+  div.className = 'rec-card';
+  if (!song.hasSource) { div.classList.add('no-source'); }
+
+  const icons = {
+    calm:'~', sad:'o', happy:'*', energetic:'!', romantic:'<3',
+    nostalgic:'~', rain:'...', focus:'>'
+  };
+  const icon = icons[song._mood] || '~';
+  const source = song.source || (song.hasSource ? '网易云' : '');
+  const playLabel = song.hasSource ? 'PLAY' : '--';
+  const sourceStyle = song.hasSource
+    ? 'font-size:clamp(6px,0.69vw,11px);color:rgba(64,224,192,0.35);'
+    : 'font-size:clamp(6px,0.69vw,11px);color:rgba(255,80,80,0.3);';
+  div.innerHTML =
+    '<div class="cover">' + icon + '</div>' +
+    '<div class="info">' +
+      '<div class="title">' + esc(song.name) + ' <span style="' + sourceStyle + '">' + (source || '无源') + '</span></div>' +
+      '<div class="meta">' + esc(song.artist) + ' / ' + esc(song.genre||'') + ' / ' + esc(song.duration||'--:--') + '</div>' +
+      '<div class="meta" style="color:rgba(64,224,192,0.22);">' + esc(song.reason||'') + (song.hasSource ? '' : '') + '</div>' +
+    '</div>' +
+    '<div class="play-btn">' + playLabel + '</div>';
+
+  if (song.hasSource) {
+    const playBtn = div.querySelector('.play-btn');
+    if (playBtn) {
+      playBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectSeedSong(song);
+      });
+    }
+  }
+  $chatMessages.appendChild(div);
+  $chatMessages.scrollTop = $chatMessages.scrollHeight;
+}
+
+async function handleUserMessage(){
+  if (state.isGenerating) return;
+  const text = $chatInput.value.trim();
+  if (!text) return;
+
+  $chatInput.value = '';
+  addChatMsg('user', text);
+  state.isGenerating = true;
+  $chatSend.textContent = '...';
+  $chatSend.style.pointerEvents = 'none';
+
+  try {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'chat-msg agent';
+    loadingDiv.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+    $chatMessages.appendChild(loadingDiv);
+    $chatMessages.scrollTop = $chatMessages.scrollHeight;
+
+    const result = await callAgent(SYSTEM_PROMPT_MOOD, text);
+
+    loadingDiv.remove();
+
+    if (!result) {
+      addChatMsg('agent', '> 连接失败。请检查右上角 [SET] 中的 API Key 是否正确，或稍后重试。');
+      return;
+    }
+
+    addChatMsg('agent', '> ' + result.response);
+    const mood = result.mood || 'calm';
+    const artistName = result.artist || '';
+    const isArtistQuery = artistName.length > 0;
+    state.currentMood = mood;
+
+    if (result.songs && result.songs.length > 0) {
+      const genre = result.genre || result.mood || '';
+      const searchMsg = isArtistQuery ? '> 正在搜索「' + artistName + '」的歌曲库...' : '> 正在搜索音源...';
+      addChatMsg('agent', searchMsg);
+      const searchLoadingDiv = document.createElement('div');
+      searchLoadingDiv.className = 'chat-msg agent';
+      searchLoadingDiv.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+      $chatMessages.appendChild(searchLoadingDiv);
+
+      // Collect all songs across multiple rounds until we have 5 playable
+      let allSongs = [...result.songs];
+      let allEnriched = [];
+      const MAX_ROUNDS = 3;
+
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const batch = (round === 0) ? result.songs : allSongs.slice(allSongs.length - 5);
+        const fresh = batch.filter(s => !allEnriched.find(e => e.name === s.name && e.artist === s.artist));
+
+        if (fresh.length === 0 && round > 0) break;
+
+        const roundEnriched = [];
+        await Promise.all((round === 0 ? batch : fresh).map(async (song) => {
+          const resultEntry = {
+            name: song.name, artist: song.artist, genre: song.genre || '',
+            reason: song.reason || '', duration: '', _mood: mood,
+            url: null, hasSource: false, source: '', _neteaseId: null
+          };
+          try {
+            const msResult = await multiSourceSearch(song.name, song.artist);
+            if (msResult && msResult.url) {
+              resultEntry.url = msResult.url;
+              resultEntry.source = msResult.source;
+              resultEntry.hasSource = true;
+              resultEntry._neteaseId = msResult.id || null;
+              if (msResult.duration) {
+                resultEntry.duration = typeof msResult.duration === 'number'
+                  ? formatTime(msResult.duration)
+                  : msResult.duration;
+              }
+            }
+            if (!resultEntry.hasSource) {
+              try {
+                const webResult = await Promise.race([
+                  webSearchSongUrl(song.name, song.artist),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 35000))
+                ]);
+                if (webResult && webResult.url) {
+                  resultEntry.url = webResult.url;
+                  resultEntry.source = webResult.source || '网络';
+                  resultEntry.hasSource = true;
+                  resultEntry._neteaseId = resultEntry._neteaseId || webResult.neteaseId;
+                  if (webResult.duration) resultEntry.duration = formatTime(webResult.duration);
+                }
+              } catch(e){}
+            }
+          } catch(e){}
+          roundEnriched.push(resultEntry);
+        }));
+
+        allEnriched.push(...roundEnriched);
+        const playableNow = allEnriched.filter(s => s.hasSource).length;
+
+        // If we have 5 playable, stop
+        if (playableNow >= 5) break;
+
+        // If last round, stop
+        if (round >= MAX_ROUNDS - 1) break;
+
+        // Need more — ask agent for additional songs
+        if (round < MAX_ROUNDS - 1) {
+          const excludeList = allEnriched.map(e => '《' + e.name + '》').join('、');
+          const genreHint = genre ? '，流派限定为「' + genre + '」' : '';
+          const morePrompt = '之前推荐了这些歌曲: ' + (excludeList || '无') + '。请再推荐5首不同的歌曲' + genreHint + '。严格返回JSON格式。';
+          const moreResult = await callAgent(SYSTEM_PROMPT_SEED, morePrompt);
+          if (moreResult && moreResult.songs && moreResult.songs.length > 0) {
+            allSongs.push(...moreResult.songs);
+          } else {
+            break; // No more songs from agent
+          }
+        }
+      }
+
+      searchLoadingDiv.remove();
+
+      // For artist queries, also do a broad artist search for additional songs
+      if (isArtistQuery) {
+        try {
+          const artistSongs = await neteaseSearch(artistName, 50);
+          const newSongs = artistSongs.filter(s =>
+            !allEnriched.find(e => e._neteaseId === s.id)
+          );
+          if (newSongs.length > 0) {
+            const withUrls = await Promise.all(newSongs.map(async (s) => {
+              try {
+                const u = await neteaseGetUrl(s.id);
+                const artists = (s.artists || s.ar || []).map(a => a.name || a).join('/');
+                return {
+                  name: s.name, artist: artists || artistName, genre: '',
+                  reason: artistName + ' 作品', duration: formatTime(s.duration / 1000),
+                  _mood: mood, url: u || null,
+                  hasSource: !!u, source: u ? '网易云' : '', _neteaseId: s.id
+                };
+              } catch(e) { return null; }
+            }));
+            withUrls.forEach(entry => {
+              if (entry) allEnriched.push(entry);
+            });
+          }
+        } catch(e) {}
+      }
+
+      allEnriched.forEach((song, i) => {
+        setTimeout(() => addRecCard(song), i * 100);
+      });
+
+      const playableCount = allEnriched.filter(s => s.hasSource).length;
+      if (playableCount === 0) {
+        addChatMsg('agent', '> 未找到有效播放源（>45s）。请尝试换个描述或关键词。');
+      } else if (isArtistQuery) {
+        addChatMsg('agent', '> 已找到「' + artistName + '」的 ' + playableCount + ' 首可播放歌曲。点击 PLAY 开始收听。');
+      } else {
+        addChatMsg('agent', '> 已找到 ' + playableCount + ' 首可播放歌曲。点击 PLAY 开始，我将以此为种子持续扩展。');
+      }
+    }
+  } finally {
+    state.isGenerating = false;
+    $chatSend.textContent = 'SEND';
+    $chatSend.style.pointerEvents = '';
+  }
+}
+
+$chatSend.addEventListener('click', handleUserMessage);
+$chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleUserMessage();
+  }
+});
+
+// Platform switcher
+document.querySelectorAll('#platform-switcher .platform-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#platform-switcher .platform-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.searchPlatform = btn.dataset.platform;
+  });
+});
+
+// ============ SETTINGS ============
+if (state.apiKey) {
+  $('api-key-input').value = state.apiKey;
+}
+
+$('btn-settings').addEventListener('click', () => {
+  $('settings-modal').classList.remove('hidden');
+  if (state.apiKey) $('api-key-input').value = state.apiKey;
+  $('netease-api-input').value = state.apiBase;
+  $('lx-api-input').value = state.lxApiBase;
+  $('demo-mode-toggle').checked = state.demoMode;
+});
+
+$('modal-cancel').addEventListener('click', () => {
+  $('settings-modal').classList.add('hidden');
+});
+
+$('modal-clear').addEventListener('click', () => {
+  state.apiKey = '';
+  localStorage.removeItem('muse_deepseek_key');
+  $('api-key-input').value = '';
+  // Reset API base to defaults
+  state.apiBase = 'http://localhost:3000';
+  state.lxApiBase = 'http://localhost:9000';
+  localStorage.removeItem('muse_api_base');
+  localStorage.removeItem('muse_lx_api_base');
+  NETEASE_BASE = state.apiBase;
+  LX_API_BASE = state.lxApiBase;
+  $('settings-modal').classList.add('hidden');
+  addChatMsg('agent', '> API Key 已清除，API地址已重置为默认值。');
+  $chatMessages.scrollTop = $chatMessages.scrollHeight;
+});
+
+$('modal-save').addEventListener('click', () => {
+  state.apiKey = $('api-key-input').value.trim();
+  if (state.apiKey) {
+    localStorage.setItem('muse_deepseek_key', state.apiKey);
+  } else {
+    localStorage.removeItem('muse_deepseek_key');
+  }
+  // Save API base URLs
+  var newApiBase = $('netease-api-input').value.trim() || 'http://localhost:3000';
+  var newLxApiBase = $('lx-api-input').value.trim() || 'http://localhost:9000';
+  state.apiBase = newApiBase;
+  state.lxApiBase = newLxApiBase;
+  localStorage.setItem('muse_api_base', newApiBase);
+  localStorage.setItem('muse_lx_api_base', newLxApiBase);
+  NETEASE_BASE = state.apiBase;
+  LX_API_BASE = state.lxApiBase;
+  // Demo mode toggle
+  state.demoMode = !!$('demo-mode-toggle').checked;
+  if (state.demoMode) {
+    showDemoBanner();
+    $('status-song').textContent = 'Demo Ready';
+  } else {
+    var b = document.getElementById('demo-banner');
+    if (b) b.remove();
+  }
+  $('settings-modal').classList.add('hidden');
+  addChatMsg('agent', state.apiKey
+    ? '> 设置已保存。' + (state.demoMode ? ' [Demo模式已启用]' : '') + '现在可以描述心情来获取推荐了。'
+    : '> 设置已保存。' + (state.demoMode ? ' [Demo模式已启用]' : ''));
+  // Re-detect if not forcing demo
+  if (!state.demoMode) {
+    detectDemoMode().then(function(isDemo){
+      if (isDemo) { showDemoBanner(); $('status-song').textContent = 'Demo Ready'; }
+    });
+  }
+  $chatMessages.scrollTop = $chatMessages.scrollHeight;
+});
+
+$('settings-modal').addEventListener('click', e => {
+  if (e.target === $('settings-modal')) $('settings-modal').classList.add('hidden');
+});
+
+// ============ NETEASE LOGIN ============
+let neteaseLoginPollTimer = null;
+let captchaTimer = null;
+
+// Lightweight MD5 for password hashing (Netease API requires MD5 password)
+function md5(str){
+  function r(n,c){return(n<<c)|(n>>>32-c);}
+  function q(n,c){var s=(n&0xFFFF)+(c&0xFFFF);return((n>>16)+(c>>16)+(s>>16)<<16)|s&0xFFFF;}
+  function b(i){for(var a=[],j=0;j<i.length;j+=4)a.push(i[j]|(i[j+1]<<8)|(i[j+2]<<16)|(i[j+3]<<24));return a;}
+  var x=b((function(s){for(var a=[],i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c<128)a.push(c);else if(c<2048)a.push(192|c>>6,128|c&63);else if(c<65536)a.push(224|c>>12,128|c>>6&63,128|c&63);else{a.push(240|c>>18,128|c>>12&63,128|c>>6&63,128|c&63);}}return a;})(str).concat(128));
+  while(x.length%16!=14)x.push(0);x.push((str.length*8)&0xFFFFFFFF,(str.length*8)>>>32);
+  var A=0x67452301,B=0xEFCDAB89,C=0x98BADCFE,D=0x10325476;
+  var S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  var K=[];
+  for(var i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*0x100000000);
+  for(var j=0;j<x.length;j+=16){
+    var a=A,b=B,c=C,d=D,F,g;
+    for(var i=0;i<64;i++){
+      if(i<16){F=(b&c)|(~b&d);g=i;}
+      else if(i<32){F=(d&b)|(~d&c);g=(5*i+1)%16;}
+      else if(i<48){F=b^c^d;g=(3*i+5)%16;}
+      else{F=c^(b|~d);g=(7*i)%16;}
+      F=q(q(F,a),q(q(x[j+g],K[i]),0));a=d;d=c;c=b;b=q(b,r(F,S[i]));
+    }
+    A=q(A,a);B=q(B,b);C=q(C,c);D=q(D,d);
+  }
+  function h(n){var s='';for(var i=0;i<4;i++)s+=((n>>(i*8))&0xFF).toString(16).padStart(2,'0');return s;}
+  return h(A)+h(B)+h(C)+h(D);
+}
+
+async function checkNeteaseStatus(){
+  if (state.demoMode) {
+    $('netease-status-text').textContent = 'Demo模式 (无需API)';
+    $('netease-status-text').style.color = 'var(--aurora)';
+    return false;
+  }
+  try {
+    const url = NETEASE_BASE + '/login/status' + (state.neteaseCookie ? '?cookie=' + encodeURIComponent(state.neteaseCookie) : '');
+    const res = await fetchWithTimeout(url, {}, 5000);
+    if (!res.ok) return false;
+    const data = await res.json();
+    const profile = data.data?.profile || data.profile;
+    const st = $('netease-status-text');
+    if (profile && profile.nickname) {
+      st.textContent = '已登录: ' + profile.nickname;
+      st.style.color = 'var(--aurora)';
+      $('btn-netease-login').textContent = '重新登录';
+      $('qr-container').style.display = 'none';
+      if (neteaseLoginPollTimer) { clearInterval(neteaseLoginPollTimer); neteaseLoginPollTimer = null; }
+      return true;
+    } else {
+      st.textContent = '未登录';
+      st.style.color = 'var(--text-dim)';
+      $('btn-netease-login').textContent = '扫码登录';
+      return false;
+    }
+  } catch (e) {
+    $('netease-status-text').textContent = 'API 未连接 (请启动 NeteaseCloudMusicApi)';
+    $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+    return false;
+  }
+}
+
+function doQrPoll(unikey){
+  if (neteaseLoginPollTimer) clearInterval(neteaseLoginPollTimer);
+  neteaseLoginPollTimer = setInterval(async () => {
+    try {
+      const checkRes = await fetchWithTimeout(NETEASE_BASE + '/login/qr/check?key=' + unikey, {}, 8000);
+      const checkData = await checkRes.json();
+      const code = checkData.code;
+      if (code === 803) {
+        clearInterval(neteaseLoginPollTimer);
+        neteaseLoginPollTimer = null;
+        $('qr-container').style.display = 'none';
+        if (checkData.cookie) {
+          state.neteaseCookie = checkData.cookie;
+          localStorage.setItem('muse_netease_cookie', checkData.cookie);
+        }
+        $('netease-status-text').textContent = '登录成功!';
+        $('netease-status-text').style.color = 'var(--aurora)';
+        checkNeteaseStatus();
+      } else if (code === 800) {
+        $('netease-status-text').textContent = '二维码已过期，自动刷新中...';
+        clearInterval(neteaseLoginPollTimer);
+        neteaseLoginPollTimer = null;
+        startNeteaseLogin();
+      } else if (code === 801 || code === 802) {
+        // 801: waiting for scan, 802: waiting for confirm — normal states
+      }
+    } catch (e) {
+      // Poll silently — one failure doesn't stop polling
+    }
+  }, 2500);
+}
+
+async function startNeteaseLogin(){
+  try {
+    const qrContainer = $('qr-container');
+    const qrImage = $('qr-image');
+    qrContainer.style.display = 'block';
+    qrImage.src = '';
+    $('netease-status-text').textContent = '获取二维码中...';
+    $('netease-status-text').style.color = 'var(--text-dim)';
+
+    const keyRes = await fetchWithTimeout(NETEASE_BASE + '/login/qr/key', {}, 8000);
+    const keyData = await keyRes.json();
+    const unikey = keyData.data?.unikey;
+    if (!unikey) { $('netease-status-text').textContent = '获取二维码失败，请确认 API 已启动'; return; }
+
+    const qrRes = await fetchWithTimeout(NETEASE_BASE + '/login/qr/create?key=' + unikey + '&qrimg=true', {}, 8000);
+    const qrData = await qrRes.json();
+    qrImage.src = qrData.data?.qrimg || '';
+
+    $('netease-status-text').textContent = '请用网易云音乐 APP 扫码';
+    $('netease-status-text').style.color = 'var(--aurora)';
+    doQrPoll(unikey);
+  } catch (e) {
+    $('netease-status-text').textContent = 'API 连接失败，请确认 NeteaseCloudMusicApi 已启动于 :3000';
+    $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+  }
+}
+
+async function neteaseLogout(){
+  try {
+    await fetchWithTimeout(NETEASE_BASE + '/logout', {}, 5000);
+  } catch (e) {} finally {
+    state.neteaseCookie = '';
+    localStorage.removeItem('muse_netease_cookie');
+    $('netease-status-text').textContent = '未登录';
+    $('netease-status-text').style.color = 'var(--text-dim)';
+    $('btn-netease-login').textContent = '扫码登录';
+    $('qr-container').style.display = 'none';
+    if (neteaseLoginPollTimer) { clearInterval(neteaseLoginPollTimer); neteaseLoginPollTimer = null; }
+  }
+}
+
+function dismissQR(){
+  if (neteaseLoginPollTimer) { clearInterval(neteaseLoginPollTimer); neteaseLoginPollTimer = null; }
+  $('qr-container').style.display = 'none';
+  $('netease-status-text').textContent = '未登录';
+  $('netease-status-text').style.color = 'var(--text-dim)';
+}
+
+async function sendCaptcha(){
+  const phone = $('netease-phone').value.trim();
+  if (!phone) { $('netease-status-text').textContent = '请先输入手机号'; return; }
+  const btn = $('btn-send-captcha');
+  btn.disabled = true;
+  $('netease-status-text').textContent = '发送验证码中...';
+  try {
+    const res = await fetchWithTimeout(NETEASE_BASE + '/captcha/sent?phone=' + phone + '&realIP=' + NETEASE_REAL_IP, {}, 10000);
+    const data = await res.json();
+    if (data.code === 200) {
+      $('netease-status-text').textContent = '验证码已发送，请输入';
+      $('netease-status-text').style.color = 'var(--aurora)';
+      let sec = 60;
+      btn.textContent = sec + 's';
+      if (captchaTimer) clearInterval(captchaTimer);
+      captchaTimer = setInterval(() => {
+        sec--;
+        if (sec <= 0) { clearInterval(captchaTimer); btn.disabled = false; btn.textContent = '发送验证码'; }
+        else btn.textContent = sec + 's';
+      }, 1000);
+    } else {
+      $('netease-status-text').textContent = '发送失败: ' + (data.message || data.msg || '请重试');
+      $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    $('netease-status-text').textContent = 'API 未连接';
+    $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+    btn.disabled = false;
+  }
+}
+
+async function phoneLogin(){
+  const phone = $('netease-phone').value.trim();
+  const pw = $('netease-password').value.trim();
+  const captcha = $('netease-captcha').value.trim();
+  if (!phone || !pw) { $('netease-status-text').textContent = '请输入手机号和密码'; return; }
+  if (!captcha) { $('netease-status-text').textContent = '请输入验证码'; return; }
+  $('netease-status-text').textContent = '登录中...';
+  $('netease-status-text').style.color = 'var(--text-dim)';
+  try {
+    const hashedPw = md5(pw);
+    const res = await fetchWithTimeout(
+      NETEASE_BASE + '/login/cellphone?phone=' + phone + '&md5_password=' + hashedPw + '&captcha=' + captcha + '&realIP=' + NETEASE_REAL_IP,
+      {}, 15000
+    );
+    const data = await res.json();
+    if (data.code === 200) {
+      state.neteaseCookie = data.cookie || '';
+      if (state.neteaseCookie) localStorage.setItem('muse_netease_cookie', state.neteaseCookie);
+      $('phone-login-area').style.display = 'none';
+      $('netease-login-btns').style.display = '';
+      $('netease-password').value = '';
+      $('netease-captcha').value = '';
+      if (captchaTimer) { clearInterval(captchaTimer); captchaTimer = null; }
+      $('btn-send-captcha').disabled = false;
+      $('btn-send-captcha').textContent = '发送验证码';
+      $('netease-status-text').style.color = 'var(--aurora)';
+      checkNeteaseStatus();
+    } else {
+      $('netease-status-text').textContent = '登录失败: ' + (data.msg || data.message || '请检查账号密码验证码');
+      $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+    }
+  } catch (e) {
+    $('netease-status-text').textContent = '登录失败: API未连接';
+    $('netease-status-text').style.color = 'rgba(255,80,80,0.6)';
+  }
+}
+
+function importCookie(){
+  const raw = $('cookie-import-input').value.trim();
+  if (!raw) { $('netease-status-text').textContent = '请先粘贴 Cookie'; return; }
+  state.neteaseCookie = raw;
+  localStorage.setItem('muse_netease_cookie', raw);
+  $('cookie-import-input').value = '';
+  $('netease-status-text').textContent = 'Cookie 已导入，检测中...';
+  $('netease-status-text').style.color = 'var(--text-dim)';
+  checkNeteaseStatus();
+}
+
+$('btn-netease-login').addEventListener('click', startNeteaseLogin);
+$('btn-netease-logout').addEventListener('click', neteaseLogout);
+$('btn-cookie-import').addEventListener('click', importCookie);
+$('btn-qr-back').addEventListener('click', dismissQR);
+$('qr-image').addEventListener('click', dismissQR);
+$('btn-send-captcha').addEventListener('click', sendCaptcha);
+$('btn-phone-login-show').addEventListener('click', () => {
+  $('qr-container').style.display = 'none';
+  $('phone-login-area').style.display = 'block';
+  $('netease-login-btns').style.display = 'none';
+  if (neteaseLoginPollTimer) { clearInterval(neteaseLoginPollTimer); neteaseLoginPollTimer = null; }
+  $('netease-status-text').textContent = '输入手机号，点击发送验证码';
+  $('netease-status-text').style.color = 'var(--text-dim)';
+});
+$('btn-phone-back').addEventListener('click', () => {
+  $('phone-login-area').style.display = 'none';
+  $('netease-login-btns').style.display = '';
+  $('netease-password').value = '';
+  $('netease-captcha').value = '';
+  if (captchaTimer) { clearInterval(captchaTimer); captchaTimer = null; }
+  $('btn-send-captcha').disabled = false;
+  $('btn-send-captcha').textContent = '发送验证码';
+  checkNeteaseStatus();
+});
+$('btn-phone-login-do').addEventListener('click', phoneLogin);
+$('netease-captcha').addEventListener('keydown', e => { if (e.key === 'Enter') phoneLogin(); });
+
+// Restore saved cookie on init
+const savedCookie = localStorage.getItem('muse_netease_cookie');
+if (savedCookie) state.neteaseCookie = savedCookie;
+checkNeteaseStatus();
+
+// Check netease status when settings opens
+$('btn-settings').addEventListener('click', () => { checkNeteaseStatus(); });
+
+// Auto-detect browser cookies for NetEase API
+async function autoDetectCookie(){
+  const st = $('netease-status-text');
+  st.textContent = '检测中...';
+  st.style.color = 'var(--text-dim)';
+  try {
+    // Use credentials:'include' to send browser cookies for localhost:3000
+    const res = await fetch(NETEASE_BASE + '/login/status?realIP=' + NETEASE_REAL_IP, {
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('API status ' + res.status);
+    const data = await res.json();
+    const profile = data.data?.profile || data.profile;
+    if (profile && profile.nickname) {
+      // Browser has valid cookies for localhost:3000!
+      st.textContent = '检测到已登录: ' + profile.nickname + ' (浏览器Cookie)';
+      st.style.color = 'var(--aurora)';
+      // Try to refresh to get a storable cookie string
+      try {
+        const refreshRes = await fetch(NETEASE_BASE + '/login/refresh', { credentials: 'include' });
+        const refreshData = await refreshRes.json();
+        if (refreshData.cookie) {
+          state.neteaseCookie = refreshData.cookie;
+          localStorage.setItem('muse_netease_cookie', refreshData.cookie);
+          st.textContent = '已登录: ' + profile.nickname + ' (Cookie已保存)';
+        }
+      } catch(e) {
+        // No worries — browser cookies will be used automatically
+      }
+      $('btn-netease-login').textContent = '重新登录';
+      return true;
+    }
+    st.textContent = '未检测到登录状态，请先打开API页面登录，或使用扫码/手机登录';
+    st.style.color = 'var(--text-dim)';
+    return false;
+  } catch(e) {
+    st.textContent = 'API 未连接 (请先启动 NeteaseCloudMusicApi :3000)';
+    st.style.color = 'rgba(255,80,80,0.6)';
+    return false;
+  }
+}
+
+function openApiPage(){
+  window.open(NETEASE_BASE + '/', '_blank');
+  $('netease-status-text').textContent = '请在打开的页面中登录网易云，然后点击"自动检测"';
+  $('netease-status-text').style.color = 'var(--text-dim)';
+}
+
+$('btn-auto-detect-cookie').addEventListener('click', autoDetectCookie);
+$('btn-open-api-page').addEventListener('click', openApiPage);
+
+// ============ FULLSCREEN ============
+$('btn-fullscreen').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+    $('btn-fullscreen').textContent = '[EXIT]';
+  } else {
+    document.exitFullscreen();
+    $('btn-fullscreen').textContent = '[FULL]';
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  $('btn-fullscreen').textContent = document.fullscreenElement ? '[EXIT]' : '[FULL]';
+});
+
+// ============ HELPERS ============
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function matchScore(requested, result){
+  const clean = s => String(s||'').toLowerCase()
+    .replace(/[（(][^)）]*[)）]/g, '')
+    .replace(/feat\.|ft\.|feat|ft/gi, '')
+    .replace(/\([^)]*\)|（[^）]*）/g, '')
+    .replace(/\s+/g, '')
+    .replace(/[^一-龥a-zA-Z0-9]/g, '')
+    .trim();
+  const rn = clean(requested.name);
+  const ra = clean(requested.artist || '');
+  const mn = clean(result.name);
+  const ma = clean(result.artist || '');
+  let nameScore = 0;
+  if (rn === mn) nameScore = 100;
+  else if (rn.length > 0 && (mn.includes(rn) || rn.includes(mn))) nameScore = 85;
+  else if (rn.length > 0) {
+    const overlap = [...rn].filter(c => mn.includes(c)).length;
+    nameScore = Math.floor((overlap / Math.max(rn.length, 1)) * 60);
+  }
+  let artistScore = 100;
+  if (ra) {
+    if (ra === ma) artistScore = 100;
+    else if (ma.includes(ra) || ra.includes(ma)) artistScore = 85;
+    else {
+      const overlap = [...ra].filter(c => ma.includes(c)).length;
+      artistScore = Math.floor((overlap / Math.max(ra.length, 1)) * 50);
+    }
+  }
+  return Math.floor((nameScore + artistScore) / 2);
+}
+
+function generateRandomChineseIP(){
+  const prefixes = ['116.25','116.76','116.77','116.78','116.79','116.80','116.81','116.82','116.83','116.84','116.85','116.86','116.87','116.88','116.89','116.90','116.91','116.92','116.93','116.94'];
+  const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const seg = () => Math.floor(Math.random() * 255) + 1;
+  return p + '.' + seg() + '.' + seg();
+}
+
+// ============ INIT ============
+updatePlaylistUI();
+updatePlayBtn();
+
+// Detect demo mode first, then show appropriate greeting
+setTimeout(async () => {
+  var isDemo = state.demoMode;
+  // Only auto-detect if not explicitly set
+  if (!isDemo) {
+    isDemo = await detectDemoMode();
+  }
+  if (isDemo) {
+    showDemoBanner();
+    addChatMsg('agent', '> ▸ DEMO MODE ◂ 本地API未连接，已启用模拟数据。你可以描述心情来体验音乐推荐。');
+    $chatInput.focus();
+    // Update status bar
+    $('status-song').textContent = 'Demo Ready';
+    var liveBadge = document.querySelector('.badge.live');
+    if (liveBadge) { liveBadge.textContent = 'DEMO'; liveBadge.style.background = 'rgba(64,224,192,0.15)'; }
+  } else if (state.apiKey) {
+    addChatMsg('agent', '> API Key 已加载。描述你的心情，我将为你探索音乐。');
+    $chatInput.focus();
+  } else {
+    addChatMsg('agent', '> 请点击右上角 [SET] 设置 DeepSeek API Key，或通过 URL 参数 ?key=sk-... 传入。然后告诉我你的心情。');
+  }
+  $chatMessages.scrollTop = $chatMessages.scrollHeight;
+}, 300);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+    e.preventDefault();
+    $('settings-modal').classList.toggle('hidden');
+  }
+  if (e.key === 'Escape') {
+    $('settings-modal').classList.add('hidden');
+  }
+  // Space to toggle play
+  if (e.key === ' ' && document.activeElement !== $chatInput && document.activeElement !== $('api-key-input')) {
+    e.preventDefault();
+    $('btn-play').click();
+  }
+});
+
+// Focus input on load
+setTimeout(() => {
+  if (state.apiKey) $chatInput.focus();
+}, 600);
+
+console.log('MUSE v0.2 | Aurora Teal Pixel Futurism | Seed Diffusion | DeepSeek V4');
+
+// ============ SEED SELECTION & ENRICH ============
+function selectSeedSong(song){
+  if (!song.hasSource || !song.url) {
+    addChatMsg('agent', '> 该歌曲暂无播放源，请选择其他可播放歌曲。');
+    return;
+  }
+
+  state.playlist = [];
+  state.currentIndex = -1;
+  state.seedSong = {name: song.name, artist: song.artist, mood: song._mood};
+  state.currentMood = song._mood || 'calm';
+  state.generationCount = 0;
+  state.preloadedForIndex = -1;
+
+  const entry = {
+    name: song.name + ' - ' + song.artist,
+    artist: song.artist,
+    duration: song.duration || '--:--',
+    url: song.url,
+    mood: song._mood || 'calm',
+    _neteaseId: song._neteaseId || null
+  };
+  state.playlist.push(entry);
+  state.currentIndex = 0;
+  updatePlaylistUI();
+  loadAndPlay(0);
+
+  $statusSong.textContent = '扩散中...';
+
+  setTimeout(async () => {
+    const songs = await seedExpand(state.seedSong, 5);
+    if (songs.length > 0) {
+      addChatMsg('agent', '> 基于「' + state.seedSong.name + '」衍生 ' + songs.length + ' 首...');
+      await enrichAndAddSongs(songs, state.currentMood);
+      updatePlaylistUI();
+      $statusSong.textContent = state.playlist[state.currentIndex]?.name || '就绪';
+    }
+  }, 800);
+}
+
+async function enrichAndAddSongs(songs, mood){
+  const enriched = [];
+  await Promise.all(songs.map(async (song) => {
+    const keyword = song.name + ' ' + song.artist;
+    const entry = {
+      name: song.name + ' - ' + song.artist,
+      artist: song.artist,
+      genre: song.genre || '',
+      reason: song.reason || '',
+      duration: '',
+      _mood: mood,
+      url: null,
+      hasSource: false,
+      source: '',
+      _neteaseId: null
+    };
+    try {
+      const msResult = await multiSourceSearch(song.name, song.artist);
+      if (msResult && msResult.url) {
+        entry.url = msResult.url;
+        entry.source = msResult.source;
+        entry.hasSource = true;
+        entry._neteaseId = msResult.id || null;
+        if (msResult.duration) {
+          entry.duration = typeof msResult.duration === 'number'
+            ? formatTime(msResult.duration)
+            : msResult.duration;
+        }
+      }
+      if (!entry.hasSource) {
+        try {
+          const webResult = await Promise.race([
+            webSearchSongUrl(song.name, song.artist),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 35000))
+          ]);
+          if (webResult && webResult.url) {
+            entry.url = webResult.url;
+            entry.source = webResult.source || '网络';
+            entry.hasSource = true;
+            entry._neteaseId = entry._neteaseId || webResult.neteaseId;
+            if (webResult.duration) entry.duration = formatTime(webResult.duration);
+          }
+        } catch(e){}
+      }
+    } catch(e){}
+    enriched.push(entry);
+  }));
+
+  let added = 0;
+  enriched.forEach((entry) => {
+    if (!state.playlist.find(s => s.name === entry.name)) {
+      if (entry.hasSource && entry.url) {
+        state.playlist.push(entry);
+        added++;
+      }
+    }
+  });
+  state.generationCount++;
+  updatePlaylistUI();
+  if (added < enriched.length) {
+    console.log('Filtered ' + (enriched.length - added) + ' unplayable from playlist');
+  }
+  return enriched;
+}
+
+})();
+</script>
+</body>
+</html>

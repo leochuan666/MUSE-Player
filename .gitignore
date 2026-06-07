@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+logs/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Internal tools
+.superpowers/
+
+# Archive (preview prototypes, old assets, reference files)
+archive/
+
+# Environment / Secrets
+.env
+.env.local
+
+# Build output
+dist/
+build/

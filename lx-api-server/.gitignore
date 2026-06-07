@@ -1,0 +1,37 @@
+# python
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+*/__pycache__/*
+__pycache__/
+*.egg-info
+*.egg
+
+# pyinstaller
+*.spec
+dist
+build
+
+# project
+test.*
+*/test.*
+*.log
+*.bak
+*.tmp
+*.db
+*.json
+*.yml
+logs
+data
+
+# VSCode
+.history
+
+# Vim
+*.swp
+*.swp~
+
+# GVim
+*.un~
+*.un
