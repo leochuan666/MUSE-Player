@@ -123,7 +123,7 @@ Agent 生成推荐理由 → 推荐卡片呈现
 
 ## Slide 13 — 知识产权与合规
 - 平台定位: "音乐发现与推荐入口"
-- Demo音频: CC0/免版权
+- Demo音频: Web Audio合成音景
 - 第三方代码: MIT License
 - 隐私保护: 全部本地存储，零数据收集
 - DeepSeek API: 用户自有Key

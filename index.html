@@ -906,7 +906,8 @@ requestAnimationFrame(renderDanmaku);
 
 // ===== PRELOAD CHECK: at 70% progress, expand if near end =====
 function checkPreload(){
-  if (!state.apiKey || state.isPreloading) return;
+  if (state.isPreloading) return;
+  if (!state.apiKey && !state.demoMode) return;
   if (!$audio.duration || isNaN($audio.duration)) return;
   if (state.currentIndex < 0 || state.playlist.length === 0) return;
   if (state.preloadedForIndex === state.currentIndex) return;
@@ -1180,7 +1181,8 @@ function loadAndPlay(index){
 }
 
 function triggerEndExpansion(){
-  if (!state.apiKey || !state.seedSong || state.isPreloading) return;
+  if (state.isPreloading || !state.seedSong) return;
+  if (!state.apiKey && !state.demoMode) return;
   const remaining = state.playlist.length - state.currentIndex - 1;
   if (remaining > 0) return;
   if (state.preloadedForIndex === state.currentIndex) return;

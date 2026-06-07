@@ -145,7 +145,7 @@ muse-player/
 
 ## ⚖️ 合规声明
 
-- **版权**: 本平台定位为"音乐发现与推荐入口"，不存储、不缓存任何音乐文件。Demo Mode 使用 CC0/免版权短音频样本。
+- **版权**: 本平台定位为"音乐发现与推荐入口"，不存储、不缓存、不分发任何商业音乐文件。Demo Mode 使用 Web Audio API 合成示例音景 + 模拟曲库，仅用于展示推荐、播放、弹幕和交互流程。
 - **AI**: 使用 DeepSeek API，用户自行提供 API Key，平台不上传、不存储用户数据。
 - **第三方代码**: `lx-api-server/` 基于 [MeoProject/lx-music-api-server](https://github.com/MeoProject/lx-music-api-server) (MIT License)，许可证见 `lx-api-server/LICENSE`。
 - **隐私**: 全部数据存储在浏览器 localStorage，无服务端数据库，无用户追踪。
